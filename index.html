@@ -3,37 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Vocal Studio - Clean & Edit Vocals</title>
+    <title>AI Vocal Studio Pro - Fixed Playback</title>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             min-height: 100vh;
             color: #e0e7ff;
-            overflow-x: hidden;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
 
-        header {
-            text-align: center;
+        header { text-align: center; margin-bottom: 2rem; }
+        h1 { font-size: 2.5rem; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
-        h1 {
-            font-size: 3rem;
-            background: linear-gradient(to right, #818cf8, #c084fc, #f472b6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: rgba(129, 140, 248, 0.1);
+            border: 2px solid #818cf8;
+            color: #e0e7ff;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
         }
 
-        .subtitle { color: #a5b4fc; font-size: 1.1rem; }
+        .tab.active {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            border-color: transparent;
+            color: white;
+        }
 
         .upload-zone {
             border: 3px dashed #818cf8;
@@ -41,119 +51,56 @@
             padding: 3rem;
             text-align: center;
             background: rgba(30, 41, 75, 0.5);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            margin-bottom: 2rem;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            transition: all 0.3s;
+            margin-bottom: 2rem;
         }
 
-        .upload-zone:hover, .upload-zone.dragover {
-            border-color: #c084fc;
-            background: rgba(30, 41, 75, 0.8);
-            transform: translateY(-2px);
-        }
-
-        .upload-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.8; }
-        .upload-text { font-size: 1.5rem; color: #e0e7ff; margin-bottom: 0.5rem; }
-        .upload-hint { color: #818cf8; font-size: 0.9rem; }
-        
+        .upload-zone:hover { border-color: #c084fc; transform: translateY(-2px); }
         input[type="file"] { display: none; }
 
         .editor-container {
             display: none;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             border-radius: 20px;
             padding: 2rem;
-            backdrop-filter: blur(20px);
             border: 1px solid rgba(129, 140, 248, 0.2);
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .waveform-container {
             background: #0f172a;
             border-radius: 15px;
             padding: 1rem;
-            margin-bottom: 2rem;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
         }
 
-        #waveform { width: 100%; height: 200px; }
+        #waveform { width: 100%; height: 150px; }
 
-        .audio-info {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .info-item {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(30, 41, 75, 0.5);
-            border-radius: 10px;
-            min-width: 120px;
-        }
-
-        .info-label { font-size: 0.85rem; color: #818cf8; margin-bottom: 0.25rem; }
-        .info-value { font-size: 1.2rem; font-weight: 600; color: #e0e7ff; }
-
-        .effects-rack {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .effect-card {
-            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(192, 132, 252, 0.1));
-            border: 1px solid rgba(129, 140, 248, 0.3);
-            border-radius: 15px;
-            padding: 1.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            opacity: 0.7;
-        }
-
-        .effect-card:hover { transform: translateY(-5px); border-color: #c084fc; }
-        .effect-card.active { opacity: 1; background: linear-gradient(135deg, rgba(129, 140, 248, 0.3), rgba(192, 132, 252, 0.3)); }
-        .effect-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-        .effect-name { font-weight: 600; margin-bottom: 0.5rem; color: #e0e7ff; }
-        .effect-desc { font-size: 0.85rem; color: #a5b4fc; margin-bottom: 1rem; }
-
-        .controls {
+        .controls-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
 
-        .control-group {
+        .panel {
             background: rgba(30, 41, 75, 0.6);
-            padding: 1.5rem;
             border-radius: 15px;
+            padding: 1.5rem;
             border: 1px solid rgba(129, 140, 248, 0.3);
         }
 
-        .control-group h3 {
-            color: #818cf8;
+        .panel h3 {
+            color: #c084fc;
             margin-bottom: 1rem;
             font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        .control-item { margin-bottom: 1rem; }
-        .control-item label {
+        .control {
+            margin-bottom: 1rem;
+        }
+
+        .control label {
             display: flex;
             justify-content: space-between;
             margin-bottom: 0.5rem;
@@ -161,7 +108,7 @@
             color: #a5b4fc;
         }
 
-        .control-item input[type="range"] {
+        input[type="range"] {
             width: 100%;
             height: 8px;
             border-radius: 4px;
@@ -170,22 +117,12 @@
             -webkit-appearance: none;
         }
 
-        .control-item input[type="range"]::-webkit-slider-thumb {
+        input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 20px; height: 20px;
             border-radius: 50%;
             background: linear-gradient(135deg, #818cf8, #c084fc);
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 2rem;
         }
 
         button {
@@ -194,11 +131,9 @@
             border-radius: 10px;
             font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin: 0.25rem;
         }
 
         .btn-primary {
@@ -206,763 +141,1013 @@
             color: white;
         }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(129, 140, 248, 0.4); }
-        
+
+        .btn-success {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
         .btn-secondary {
             background: rgba(129, 140, 248, 0.2);
             color: #e0e7ff;
             border: 1px solid #818cf8;
         }
-        .btn-secondary:hover { background: rgba(129, 140, 248, 0.3); }
-        
-        .btn-danger {
-            background: rgba(244, 114, 182, 0.2);
-            color: #f472b6;
-            border: 1px solid #f472b6;
-        }
-        .btn-danger:hover { background: rgba(244, 114, 182, 0.3); }
-        
-        .btn-success {
-            background: linear-gradient(135deg, #34d399, #10b981);
-            color: white;
-            font-size: 1.1rem;
-            padding: 1rem 2rem;
-        }
-        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4); }
 
-        .btn-small { padding: 0.5rem 1rem; font-size: 0.9rem; }
+        .play-btn {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.3);
+        }
+
+        .play-btn:hover { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 40px rgba(129, 140, 248, 0.6); 
+        }
+        
+        .play-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
         .status {
-            text-align: center;
-            padding: 1rem;
+            position: fixed;
+            top: 20px; right: 20px;
+            padding: 1rem 1.5rem;
             border-radius: 10px;
-            margin-bottom: 1rem;
-            font-weight: 500;
             display: none;
+            z-index: 1000;
+            color: white;
+            font-weight: 500;
         }
-        .status.processing { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; display: block; }
-        .status.success { background: rgba(52, 211, 153, 0.2); color: #34d399; border: 1px solid #34d399; display: block; }
-        .status.error { background: rgba(244, 114, 182, 0.2); color: #f472b6; border: 1px solid #f472b6; display: block; }
+        .status.show { display: block; }
+        .status.success { background: rgba(52, 211, 153, 0.9); }
+        .status.error { background: rgba(244, 114, 182, 0.9); }
 
         .loading {
-            display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.95);
-            z-index: 1000;
+            z-index: 999;
+            display: none;
             justify-content: center;
             align-items: center;
             flex-direction: column;
         }
 
         .spinner {
-            width: 60px;
-            height: 60px;
+            width: 60px; height: 60px;
             border: 4px solid rgba(129, 140, 248, 0.3);
             border-top: 4px solid #818cf8;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { color: #e0e7ff; font-size: 1.2rem; }
 
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
+        .hidden { display: none !important; }
+        
+        .info-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid #fbbf24;
+            color: #fbbf24;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            text-align: center;
         }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .switch {
+            position: relative;
+            width: 50px; height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute;
             cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #1e293b;
+            background-color: #475569;
             transition: .4s;
             border-radius: 34px;
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
+            height: 20px; width: 20px;
+            left: 3px; bottom: 3px;
             background-color: white;
             transition: .4s;
             border-radius: 50%;
         }
         input:checked + .slider { background: linear-gradient(135deg, #818cf8, #c084fc); }
-        input:checked + .slider:before { transform: translateX(26px); }
+        input:checked + .slider:before { transform: translateX(24px); }
 
-        .region-controls {
-            display: flex;
-            gap: 0.5rem;
+        .stem-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(129, 140, 248, 0.2);
+            border: 2px solid #818cf8;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .stem-btn:hover { background: linear-gradient(135deg, #818cf8, #c084fc); border-color: transparent; }
+
+        .drop-zone-small {
+            border: 2px dashed #818cf8;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
             margin-top: 1rem;
-            justify-content: center;
+            background: rgba(129, 140, 248, 0.1);
         }
-
-        @media (max-width: 768px) {
-            h1 { font-size: 2rem; }
-            .container { padding: 1rem; }
-            .controls { grid-template-columns: 1fr; }
-        }
+        .drop-zone-small:hover { background: rgba(129, 140, 248, 0.2); }
     </style>
+<base target="_blank">
 </head>
 <body>
 
 <div class="loading" id="loading">
     <div class="spinner"></div>
-    <div class="loading-text">Processing Audio...</div>
+    <div style="margin-top: 1rem; color: #e0e7ff;">Processing...</div>
 </div>
+
+<div class="status" id="status"></div>
 
 <div class="container">
     <header>
-        <h1>🎙️ AI Vocal Studio</h1>
-        <p class="subtitle">Professional vocal cleaning and editing in your browser</p>
+        <h1>🎙️ AI Vocal Studio Pro</h1>
+        <p style="color: #a5b4fc;">Click Play to hear effects in real-time</p>
     </header>
 
-    <div class="upload-zone" id="dropZone">
-        <div class="upload-icon">☁️</div>
-        <div class="upload-text">Drop your vocals here or click to browse</div>
-        <div class="upload-hint">Supports WAV, MP3, FLAC, M4A (Max 50MB)</div>
-        <input type="file" id="audioInput" accept="audio/*">
+    <div class="tabs hidden" id="tabs">
+        <button class="tab active" onclick="switchTab('clean', event)">🧹 Clean & Edit</button>
+        <button class="tab" onclick="switchTab('stems', event)">🎛️ Extract Stems</button>
+        <button class="tab" onclick="switchTab('mix', event)">🎵 Mix with Beats</button>
     </div>
 
-    <div class="status" id="status"></div>
+    <div class="upload-zone" id="mainUpload">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">☁️</div>
+        <div style="font-size: 1.3rem; margin-bottom: 0.5rem;">Drop your vocals here or click to upload</div>
+        <div style="color: #818cf8; font-size: 0.9rem;">WAV, MP3, M4A supported</div>
+        <input type="file" id="fileInput" accept="audio/*">
+    </div>
 
     <div class="editor-container" id="editor">
-        <div class="audio-info">
-            <div class="info-item">
-                <div class="info-label">File Name</div>
-                <div class="info-value" id="fileName">-</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Duration</div>
-                <div class="info-value" id="duration">-</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Sample Rate</div>
-                <div class="info-value" id="sampleRate">-</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Format</div>
-                <div class="info-value" id="format">-</div>
-            </div>
-        </div>
-
-        <div class="waveform-container">
-            <div id="waveform"></div>
-            <div class="region-controls">
-                <button class="btn-secondary btn-small" onclick="playRegion()">▶ Play Selection</button>
-                <button class="btn-secondary btn-small" onclick="zoomIn()">🔍+</button>
-                <button class="btn-secondary btn-small" onclick="zoomOut()">🔍-</button>
-                <button class="btn-danger btn-small" onclick="clearRegion()">Clear Selection</button>
-            </div>
-        </div>
-
-        <div class="effects-rack">
-            <div class="effect-card" id="noiseGate">
-                <div class="effect-icon">🔇</div>
-                <div class="effect-name">AI Noise Gate</div>
-                <div class="effect-desc">Removes background noise</div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="noiseGateToggle">
-                    <span class="slider"></span>
-                </label>
+        
+        <!-- CLEAN TAB -->
+        <div id="cleanTab">
+            <div class="info-box">
+                🔊 <strong>Live Preview:</strong> Click play, then adjust sliders to hear changes instantly!
             </div>
 
-            <div class="effect-card" id="deesser">
-                <div class="effect-icon">🗣️</div>
-                <div class="effect-name">De-esser</div>
-                <div class="effect-desc">Reduces harsh sibilance</div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="deesserToggle">
-                    <span class="slider"></span>
-                </label>
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
+                <div style="margin-top: 0.5rem; color: #818cf8;" id="playStatus">Loading...</div>
             </div>
 
-            <div class="effect-card active" id="eq">
-                <div class="effect-icon">🎚️</div>
-                <div class="effect-name">Vocal EQ</div>
-                <div class="effect-desc">Auto EQ for voice</div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="eqToggle" checked>
-                    <span class="slider"></span>
-                </label>
+            <div class="waveform-container">
+                <div id="waveform"></div>
             </div>
 
-            <div class="effect-card active" id="compressor">
-                <div class="effect-icon">📊</div>
-                <div class="effect-name">Compressor</div>
-                <div class="effect-desc">Evens out dynamics</div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="compressorToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="effect-card active" id="normalize">
-                <div class="effect-icon">📢</div>
-                <div class="effect-name">Normalize</div>
-                <div class="effect-desc">Optimal volume level</div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="normalizeToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
-
-        <div class="controls">
-            <div class="control-group">
-                <h3>🎛️ Manual Controls</h3>
-                <div class="control-item">
-                    <label>High Pass Filter <span id="hpValue">80Hz</span></label>
-                    <input type="range" id="highPass" min="20" max="200" value="80" oninput="updateValue('hp', this.value, 'Hz')">
+            <div class="controls-row">
+                <div class="panel">
+                    <h3>🔧 Fix Issues</h3>
+                    <div class="toggle-row">
+                        <span>Noise Gate (Silence bg)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="gate" onchange="updateChain()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Compressor (Even volume)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="compress" checked onchange="updateChain()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control" style="margin-top: 1rem;">
+                        <label>High Pass Filter: <span id="hpDisp">100Hz</span></label>
+                        <input type="range" id="highPass" min="40" max="300" value="100" oninput="updateChain(); document.getElementById('hpDisp').textContent = this.value + 'Hz'">
+                    </div>
                 </div>
-                <div class="control-item">
-                    <label>Presence <span id="presenceValue">0dB</span></label>
-                    <input type="range" id="presence" min="-12" max="12" value="0" oninput="updateValue('presence', this.value, 'dB')">
+
+                <div class="panel">
+                    <h3>✨ Enhance Clarity</h3>
+                    <div class="control">
+                        <label>Presence (5kHz boost): <span id="prDisp">0dB</span></label>
+                        <input type="range" id="presence" min="-12" max="15" value="0" oninput="updateChain(); document.getElementById('prDisp').textContent = this.value + 'dB'">
+                    </div>
+                    <div class="control">
+                        <label>De-esser (Reduce harsh S sounds): <span id="dsDisp">0</span></label>
+                        <input type="range" id="deesser" min="0" max="100" value="0" oninput="updateChain(); document.getElementById('dsDisp').textContent = this.value">
+                    </div>
+                    <div class="control">
+                        <label>Output Volume: <span id="gainDisp">0dB</span></label>
+                        <input type="range" id="gain" min="-20" max="20" value="0" oninput="updateChain(); document.getElementById('gainDisp').textContent = this.value + 'dB'">
+                    </div>
                 </div>
-                <div class="control-item">
-                    <label>Output Gain <span id="gainValue">0dB</span></label>
-                    <input type="range" id="gain" min="-20" max="20" value="0" oninput="updateValue('gain', this.value, 'dB')">
+
+                <div class="panel">
+                    <h3>💾 Export Final</h3>
+                    <p style="color: #a5b4fc; font-size: 0.9rem; margin-bottom: 1rem;">Render all effects to WAV file</p>
+                    <button class="btn-success" onclick="exportAudio()" style="width: 100%; margin-bottom: 0.5rem;">Download Clean VOCALS</button>
+                    <button class="btn-secondary" onclick="resetAudio()" style="width: 100%;">Reset to Original</button>
                 </div>
             </div>
+        </div>
 
-            <div class="control-group">
-                <h3>✂️ Editing</h3>
-                <div class="control-item">
-                    <label>Fade In <span id="fadeInValue">10ms</span></label>
-                    <input type="range" id="fadeIn" min="0" max="1000" value="10" oninput="updateValue('fadeIn', this.value, 'ms')">
+        <!-- STEMS TAB -->
+        <div id="stemsTab" class="hidden">
+            <div class="panel" style="max-width: 600px; margin: 0 auto;">
+                <h3>🎛️ AI Stem Separation</h3>
+                <p style="color: #a5b4fc; margin-bottom: 1rem;">
+                    Extract vocals or instrumental using stereo phase cancellation.<br>
+                    <small>(Best for songs where vocals are centered)</small>
+                </p>
+                
+                <button class="stem-btn" onclick="makeVocalStem()">🎤 Extract Vocals Only</button>
+                <button class="stem-btn" onclick="makeInstStem()">🎹 Extract Instrumental (Karaoke)</button>
+                
+                <div id="stemPlayer" class="hidden" style="margin-top: 1.5rem;">
+                    <div class="waveform-container">
+                        <div id="stemWave"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button class="btn-primary" onclick="toggleStemPlay()" style="margin-right: 1rem;">▶ Play Stem</button>
+                        <button class="btn-success" onclick="exportStem()">💾 Download Stem</button>
+                    </div>
                 </div>
-                <div class="control-item">
-                    <label>Fade Out <span id="fadeOutValue">10ms</span></label>
-                    <input type="range" id="fadeOut" min="0" max="1000" value="10" oninput="updateValue('fadeOut', this.value, 'ms')">
-                </div>
-                <button class="btn-secondary btn-small" onclick="trimSilence()" style="width: 100%; margin-top: 0.5rem;">
-                    Auto Trim Silence
-                </button>
             </div>
         </div>
 
-        <div class="button-group">
-            <button class="btn-primary" onclick="togglePlay()">
-                <span id="playIcon">▶</span> Play/Pause
-            </button>
-            <button class="btn-secondary" onclick="stopAudio()">⏹ Stop</button>
-            <button class="btn-secondary" onclick="resetEffects()">↺ Reset</button>
-            <button class="btn-primary" onclick="applyEffects()">✨ Apply Effects</button>
+        <!-- MIX TAB -->
+        <div id="mixTab" class="hidden">
+            <div class="panel">
+                <h3>🎵 Mix with Beat</h3>
+                <div id="beatUploadBox" class="drop-zone-small">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🥁</div>
+                    <div>Drop a beat/instrumental here</div>
+                    <input type="file" id="beatInput" accept="audio/*" style="display: none;">
+                </div>
+                
+                <div id="mixControls" class="hidden" style="margin-top: 1.5rem;">
+                    <div class="info-box">
+                        Both tracks loaded! Adjust volumes and click Play to preview mix.
+                    </div>
+                    
+                    <div class="controls-row">
+                        <div class="panel">
+                            <h3>🎤 Your Vocals</h3>
+                            <div class="control">
+                                <label>Volume: <span id="voxVolDisp">80%</span></label>
+                                <input type="range" id="vocalVol" min="0" max="100" value="80" oninput="updateMix(); document.getElementById('voxVolDisp').textContent = this.value + '%'">
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h3>🥁 Beat Track</h3>
+                            <div class="control">
+                                <label>Volume: <span id="beatVolDisp">70%</span></label>
+                                <input type="range" id="beatVolSlider" min="0" max="100" value="70" oninput="updateMix(); document.getElementById('beatVolDisp').textContent = this.value + '%'">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="play-btn" onclick="toggleMixPlay()" style="width: 70px; height: 70px;">▶</button>
+                        <button class="btn-success" onclick="exportMix()" style="margin-left: 1rem;">💾 Export Mix</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div style="text-align: center;">
-            <button class="btn-success" onclick="exportWAV()">
-                💾 Export Cleaned WAV
-            </button>
-        </div>
     </div>
 </div>
 
 <script>
 let wavesurfer;
-let audioContext;
-let audioBuffer;
+let mainAudioUrl = null; // Track ObjectURL for cleanup
+let audioCtx;
+let sourceNode;
+let gainNode, compNode, eqNode, hpNode, deesserNode, gateNode;
 let originalBuffer;
-let activeRegion = null;
+let currentBuffer;
 let isPlaying = false;
-let currentAudioUrl = null;
+let startTime = 0;
+let pauseTime = 0;
 
-// Initialize Wavesurfer
-function initWavesurfer() {
-    if (wavesurfer) {
-        wavesurfer.destroy();
-    }
-    
-    wavesurfer = WaveSurfer.create({
-        container: '#waveform',
-        waveColor: '#818cf8',
-        progressColor: '#c084fc',
-        cursorColor: '#f472b6',
-        barWidth: 2,
-        barRadius: 4,
-        responsive: true,
-        height: 200,
-        normalize: true
-    });
+// Stem vars
+let stemBuffer = null;
+let stemWavesurfer = null;
+let stemSource = null;
+let isStemPlaying = false;
 
-    wavesurfer.on('ready', () => {
-        document.getElementById('duration').textContent = formatTime(wavesurfer.getDuration());
-        
-        // Enable region selection plugin manually since we're not using the plugin syntax
-        wavesurfer.enableDragSelection({
-            color: 'rgba(192, 132, 252, 0.3)',
-            borderColor: '#c084fc',
-            borderWidth: 2
-        });
-    });
+// Mix vars
+let beatBuffer = null;
+let vocalGain, beatGain;
+let mixVocalSource, mixBeatSource;
+let isMixPlaying = false;
 
-    wavesurfer.on('region-created', (region) => {
-        if (activeRegion) activeRegion.remove();
-        activeRegion = region;
-    });
+// Initialize
+document.getElementById('mainUpload').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', handleUpload);
 
-    wavesurfer.on('region-updated', (region) => {
-        activeRegion = region;
-    });
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    document.getElementById('mainUpload').addEventListener(eventName, preventDefaults, false);
+});
 
-    wavesurfer.on('play', () => {
-        isPlaying = true;
-        document.getElementById('playIcon').textContent = '⏸';
-    });
-
-    wavesurfer.on('pause', () => {
-        isPlaying = false;
-        document.getElementById('playIcon').textContent = '▶';
-    });
-
-    wavesurfer.on('finish', () => {
-        isPlaying = false;
-        document.getElementById('playIcon').textContent = '▶';
-    });
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
 }
 
-// File Upload Handling
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('audioInput');
+document.getElementById('mainUpload').addEventListener('drop', handleDrop, false);
 
-dropZone.addEventListener('click', () => fileInput.click());
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+}
 
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-});
+function handleUpload(e) {
+    handleFiles(e.target.files);
+}
 
-dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('dragover');
-});
-
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
-
-fileInput.addEventListener('change', (e) => {
-    if (e.target.files[0]) handleFile(e.target.files[0]);
-});
-
-async function handleFile(file) {
-    if (!file.type.startsWith('audio/')) {
-        showStatus('Please upload an audio file', 'error');
-        return;
-    }
+async function handleFiles(files) {
+    if (files.length === 0) return;
+    const file = files[0];
     
-    if (file.size > 50 * 1024 * 1024) {
-        showStatus('File too large (max 50MB)', 'error');
-        return;
-    }
-
-    showLoading(true);
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('playBtn').disabled = true;
+    document.getElementById('playStatus').textContent = 'Loading audio...';
     
     try {
-        document.getElementById('fileName').textContent = file.name;
-        document.getElementById('format').textContent = file.type.split('/')[1].toUpperCase();
+        // Initialize audio context on user interaction
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Create object URL for wavesurfer
-        currentAudioUrl = URL.createObjectURL(file);
+        const arrayBuffer = await file.arrayBuffer();
         
-        initWavesurfer();
-        wavesurfer.load(currentAudioUrl);
+        // FIX 6: Add error handling for audio decoding
+        try {
+            originalBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        } catch (decodeErr) {
+            throw new Error('Failed to decode audio file. Please try a different format (WAV or MP3).');
+        }
         
-        // Decode for processing
-        arrayBuffer = await file.arrayBuffer();
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        originalBuffer = audioBuffer;
+        currentBuffer = originalBuffer;
         
-        document.getElementById('sampleRate').textContent = audioBuffer.sampleRate + ' Hz';
+        // Cleanup previous URL if exists
+        if (mainAudioUrl) {
+            URL.revokeObjectURL(mainAudioUrl);
+        }
+        
+        // Setup wavesurfer
+        if (wavesurfer) wavesurfer.destroy();
+        
+        mainAudioUrl = URL.createObjectURL(file);
+        wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#818cf8',
+            progressColor: '#c084fc',
+            cursorColor: '#f472b6',
+            barWidth: 2,
+            height: 150,
+            normalize: true
+        });
+        
+        wavesurfer.load(mainAudioUrl);
+        
+        wavesurfer.on('ready', () => {
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('playStatus').textContent = 'Ready to play!';
+        });
+        
+        // Show editor
+        document.getElementById('mainUpload').style.display = 'none';
         document.getElementById('editor').style.display = 'block';
-        document.getElementById('dropZone').style.display = 'none';
-        showStatus('Audio loaded! Toggle effects and click "Apply Effects"', 'success');
+        document.getElementById('tabs').classList.remove('hidden');
         
+        // Init audio nodes for live preview
+        initAudioNodes();
+        
+        showStatus('Audio loaded! Click the play button to start.', 'success');
     } catch (err) {
         console.error(err);
-        showStatus('Error loading audio: ' + err.message, 'error');
+        showStatus('Error: ' + err.message, 'error');
+        document.getElementById('playStatus').textContent = 'Error loading audio';
     } finally {
-        showLoading(false);
+        document.getElementById('loading').style.display = 'none';
     }
 }
 
-// Playback Controls
-function togglePlay() {
-    if (!wavesurfer) return;
-    wavesurfer.playPause();
+function initAudioNodes() {
+    // Create effect nodes
+    gainNode = audioCtx.createGain();
+    
+    // FIX 4: Initialize Noise Gate
+    gateNode = audioCtx.createDynamicsCompressor();
+    gateNode.threshold.value = -60;
+    gateNode.knee.value = 0;
+    gateNode.ratio.value = 20;
+    gateNode.attack.value = 0.001;
+    gateNode.release.value = 0.1;
+    
+    compNode = audioCtx.createDynamicsCompressor();
+    compNode.threshold.value = -24;
+    compNode.knee.value = 30;
+    compNode.ratio.value = 4;
+    compNode.attack.value = 0.003;
+    compNode.release.value = 0.1;
+    
+    hpNode = audioCtx.createBiquadFilter();
+    hpNode.type = 'highpass';
+    hpNode.frequency.value = 100;
+    hpNode.Q.value = 1;
+    
+    eqNode = audioCtx.createBiquadFilter();
+    eqNode.type = 'peaking';
+    eqNode.frequency.value = 5000;
+    eqNode.Q.value = 1;
+    eqNode.gain.value = 0;
+    
+    deesserNode = audioCtx.createBiquadFilter();
+    deesserNode.type = 'peaking';
+    deesserNode.frequency.value = 8000;
+    deesserNode.Q.value = 5;
+    deesserNode.gain.value = 0;
+}
+
+async function resumeContext() {
+    if (audioCtx && audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+    }
+}
+
+// FIX 3: Removed audio restart logic - Web Audio nodes update in real-time
+function updateChain() {
+    if (!audioCtx) return;
+    
+    // Update values from UI
+    const hpFreq = parseInt(document.getElementById('highPass').value);
+    const presence = parseInt(document.getElementById('presence').value);
+    const deesserAmt = parseInt(document.getElementById('deesser').value);
+    const gainVal = parseInt(document.getElementById('gain').value);
+    
+    // Apply to nodes (these update in real-time without restarting source)
+    hpNode.frequency.value = hpFreq;
+    eqNode.gain.value = presence;
+    deesserNode.gain.value = -(deesserAmt / 100 * 12);
+    gainNode.gain.value = Math.pow(10, gainVal / 20);
+}
+
+async function togglePlay() {
+    if (isPlaying) {
+        stopAudio();
+    } else {
+        await resumeContext();
+        playAudio();
+    }
+}
+
+function playAudio() {
+    if (!currentBuffer || !audioCtx) return;
+    
+    // Create new source
+    sourceNode = audioCtx.createBufferSource();
+    sourceNode.buffer = currentBuffer;
+    
+    // Build effect chain
+    let lastNode = sourceNode;
+    
+    // 1. High Pass (always on, minimum processing)
+    lastNode.connect(hpNode);
+    lastNode = hpNode;
+    
+    // FIX 4: Add Noise Gate to chain
+    if (document.getElementById('gate').checked) {
+        lastNode.connect(gateNode);
+        lastNode = gateNode;
+    }
+    
+    // 2. Compressor
+    if (document.getElementById('compress').checked) {
+        lastNode.connect(compNode);
+        lastNode = compNode;
+    }
+    
+    // 3. EQ (Presence)
+    if (parseInt(document.getElementById('presence').value) !== 0) {
+        lastNode.connect(eqNode);
+        lastNode = eqNode;
+    }
+    
+    // 4. De-esser
+    if (parseInt(document.getElementById('deesser').value) > 0) {
+        lastNode.connect(deesserNode);
+        lastNode = deesserNode;
+    }
+    
+    // 5. Output Gain
+    lastNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    // Start playback from pause position
+    sourceNode.start(0, pauseTime);
+    startTime = audioCtx.currentTime;
+    
+    // Update UI
+    isPlaying = true;
+    document.getElementById('playBtn').textContent = '⏸';
+    document.getElementById('playStatus').textContent = 'Playing with live effects...';
+    
+    // Handle ended
+    sourceNode.onended = () => {
+        if (isPlaying) { // Natural end, not stopped manually
+            isPlaying = false;
+            pauseTime = 0;
+            document.getElementById('playBtn').textContent = '▶';
+            document.getElementById('playStatus').textContent = 'Finished';
+        }
+    };
 }
 
 function stopAudio() {
-    if (!wavesurfer) return;
-    wavesurfer.stop();
-}
-
-function playRegion() {
-    if (activeRegion) {
-        activeRegion.play();
-    } else {
-        showStatus('Select a region first', 'error');
-    }
-}
-
-function zoomIn() {
-    // Wavesurfer 7 zoom isn't straightforward, skip or implement differently
-    showStatus('Use Ctrl+Scroll to zoom', 'success');
-}
-
-function zoomOut() {
-    showStatus('Use Ctrl+Scroll to zoom', 'success');
-}
-
-function clearRegion() {
-    if (activeRegion) {
-        activeRegion.remove();
-        activeRegion = null;
-    }
-}
-
-// Audio Processing
-async function applyEffects() {
-    if (!audioBuffer) {
-        showStatus('No audio loaded', 'error');
-        return;
+    if (sourceNode) {
+        try {
+            sourceNode.stop();
+            sourceNode.disconnect();
+        } catch(e) {}
+        sourceNode = null;
     }
     
-    showLoading(true);
+    // Save position for resume
+    if (isPlaying) {
+        pauseTime = audioCtx.currentTime - startTime + pauseTime;
+    }
+    
+    isPlaying = false;
+    document.getElementById('playBtn').textContent = '▶';
+    document.getElementById('playStatus').textContent = 'Paused';
+}
+
+async function exportAudio() {
+    if (!currentBuffer) return;
+    
+    document.getElementById('loading').style.display = 'flex';
     
     try {
-        // Create offline context
         const offlineCtx = new OfflineAudioContext(
-            audioBuffer.numberOfChannels,
-            audioBuffer.length,
-            audioBuffer.sampleRate
+            currentBuffer.numberOfChannels,
+            currentBuffer.length,
+            currentBuffer.sampleRate
         );
-
+        
         const source = offlineCtx.createBufferSource();
-        source.buffer = audioBuffer;
-
+        source.buffer = currentBuffer;
+        
         let lastNode = source;
-
-        // Chain effects based on toggles
-        if (document.getElementById('noiseGateToggle').checked) {
-            const gate = offlineCtx.createBiquadFilter();
-            gate.type = 'highpass';
-            gate.frequency.value = 200;
-            gate.gain.value = -10;
+        
+        // Recreate chain in offline context
+        const hp = offlineCtx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = parseInt(document.getElementById('highPass').value);
+        lastNode.connect(hp);
+        lastNode = hp;
+        
+        // FIX 4: Add Gate to export
+        if (document.getElementById('gate').checked) {
+            const gate = offlineCtx.createDynamicsCompressor();
+            gate.threshold.value = -60;
+            gate.knee.value = 0;
+            gate.ratio.value = 20;
+            gate.attack.value = 0.001;
+            gate.release.value = 0.1;
             lastNode.connect(gate);
             lastNode = gate;
         }
-
-        if (document.getElementById('highPass').value > 20) {
-            const hpFilter = offlineCtx.createBiquadFilter();
-            hpFilter.type = 'highpass';
-            hpFilter.frequency.value = parseInt(document.getElementById('highPass').value);
-            hpFilter.Q.value = 1;
-            lastNode.connect(hpFilter);
-            lastNode = hpFilter;
+        
+        if (document.getElementById('compress').checked) {
+            const comp = offlineCtx.createDynamicsCompressor();
+            comp.threshold.value = -24;
+            comp.ratio.value = 4;
+            lastNode.connect(comp);
+            lastNode = comp;
         }
-
-        if (document.getElementById('eqToggle').checked) {
-            // Presence boost
-            const presence = offlineCtx.createBiquadFilter();
-            presence.type = 'peaking';
-            presence.frequency.value = 5000;
-            presence.Q.value = 1;
-            presence.gain.value = parseInt(document.getElementById('presence').value);
-            lastNode.connect(presence);
-            lastNode = presence;
-            
-            // Low cut for vocals
-            const lowCut = offlineCtx.createBiquadFilter();
-            lowCut.type = 'highpass';
-            lowCut.frequency.value = 80;
-            lastNode.connect(lowCut);
-            lastNode = lowCut;
+        
+        if (parseInt(document.getElementById('presence').value) !== 0) {
+            const eq = offlineCtx.createBiquadFilter();
+            eq.type = 'peaking';
+            eq.frequency.value = 5000;
+            eq.gain.value = parseInt(document.getElementById('presence').value);
+            lastNode.connect(eq);
+            lastNode = eq;
         }
-
-        if (document.getElementById('deesserToggle').checked) {
-            const deesser = offlineCtx.createBiquadFilter();
-            deesser.type = 'peaking';
-            deesser.frequency.value = 8000;
-            deesser.Q.value = 5;
-            deesser.gain.value = -6;
-            lastNode.connect(deesser);
-            lastNode = deesser;
+        
+        if (parseInt(document.getElementById('deesser').value) > 0) {
+            const ds = offlineCtx.createBiquadFilter();
+            ds.type = 'peaking';
+            ds.frequency.value = 8000;
+            ds.gain.value = -(parseInt(document.getElementById('deesser').value) / 100 * 12);
+            lastNode.connect(ds);
+            lastNode = ds;
         }
-
-        if (document.getElementById('compressorToggle').checked) {
-            const compressor = offlineCtx.createDynamicsCompressor();
-            compressor.threshold.value = -24;
-            compressor.knee.value = 30;
-            compressor.ratio.value = 12;
-            compressor.attack.value = 0.003;
-            compressor.release.value = 0.25;
-            lastNode.connect(compressor);
-            lastNode = compressor;
-        }
-
-        if (document.getElementById('normalizeToggle').checked) {
-            // Calculate peak
-            const data = audioBuffer.getChannelData(0);
-            let max = 0;
-            for (let i = 0; i < data.length; i++) {
-                max = Math.max(max, Math.abs(data[i]));
-            }
-            if (max > 0) {
-                const gainNode = offlineCtx.createGain();
-                gainNode.gain.value = 0.95 / max;
-                lastNode.connect(gainNode);
-                lastNode = gainNode;
-            }
-        }
-
-        // Output gain
-        const masterGain = offlineCtx.createGain();
-        masterGain.gain.value = dbToGain(parseInt(document.getElementById('gain').value));
-        lastNode.connect(masterGain);
-        lastNode = masterGain;
-
-        lastNode.connect(offlineCtx.destination);
+        
+        const gain = offlineCtx.createGain();
+        gain.gain.value = Math.pow(10, parseInt(document.getElementById('gain').value) / 20);
+        lastNode.connect(gain);
+        gain.connect(offlineCtx.destination);
+        
         source.start();
-
-        // Render
-        const renderedBuffer = await offlineCtx.startRendering();
-        audioBuffer = renderedBuffer;
+        const rendered = await offlineCtx.startRendering();
         
-        // Convert to WAV and load into wavesurfer
-        const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
-        const newUrl = URL.createObjectURL(wavBlob);
-        
-        // Clean up old URL
-        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-        currentAudioUrl = newUrl;
-        
-        wavesurfer.load(newUrl);
-        
-        showStatus('Effects applied!', 'success');
-        
+        downloadBuffer(rendered, 'cleaned_vocals.wav');
+        showStatus('Downloaded!', 'success');
     } catch (err) {
-        console.error('Processing error:', err);
-        showStatus('Processing error: ' + err.message, 'error');
+        showStatus('Export failed: ' + err.message, 'error');
     } finally {
-        showLoading(false);
+        document.getElementById('loading').style.display = 'none';
     }
 }
 
-function dbToGain(db) {
-    return Math.pow(10, db / 20);
-}
-
-function updateValue(id, value, unit) {
-    document.getElementById(id + 'Value').textContent = value + unit;
-}
-
-function trimSilence() {
-    if (!audioBuffer) return;
-    showLoading(true);
-    
-    try {
-        const threshold = 0.02;
-        const data = audioBuffer.getChannelData(0);
-        let start = 0;
-        let end = data.length - 1;
-        
-        while (start < data.length && Math.abs(data[start]) < threshold) start++;
-        while (end > 0 && Math.abs(data[end]) < threshold) end--;
-        
-        if (start >= end) {
-            showStatus('No silence detected', 'error');
-            return;
-        }
-        
-        const newLength = end - start;
-        const newBuffer = audioContext.createBuffer(
-            audioBuffer.numberOfChannels,
-            newLength,
-            audioBuffer.sampleRate
-        );
-        
-        for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
-            const oldData = audioBuffer.getChannelData(ch);
-            const newData = newBuffer.getChannelData(ch);
-            for (let i = 0; i < newLength; i++) {
-                newData[i] = oldData[start + i];
-            }
-        }
-        
-        audioBuffer = newBuffer;
-        
-        // Update wavesurfer
-        const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
-        const newUrl = URL.createObjectURL(wavBlob);
-        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-        currentAudioUrl = newUrl;
-        wavesurfer.load(newUrl);
-        
-        showStatus('Silence trimmed!', 'success');
-    } catch (err) {
-        showStatus('Error trimming: ' + err.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-function resetEffects() {
-    if (!originalBuffer) return;
-    audioBuffer = originalBuffer;
-    
-    const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
-    const newUrl = URL.createObjectURL(wavBlob);
-    if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-    currentAudioUrl = newUrl;
-    wavesurfer.load(newUrl);
-    
-    // Reset UI
-    document.getElementById('noiseGateToggle').checked = false;
-    document.getElementById('deesserToggle').checked = false;
-    document.getElementById('eqToggle').checked = true;
-    document.getElementById('compressorToggle').checked = true;
-    document.getElementById('normalizeToggle').checked = true;
-    document.getElementById('highPass').value = 80;
-    document.getElementById('presence').value = 0;
-    document.getElementById('gain').value = 0;
-    
-    updateValue('hp', 80, 'Hz');
-    updateValue('presence', 0, 'dB');
-    updateValue('gain', 0, 'dB');
-    
-    updateEffectCards();
-    showStatus('Reset to original', 'success');
-}
-
-function updateEffectCards() {
-    document.querySelectorAll('.effect-card').forEach(card => {
-        const toggle = card.querySelector('input[type="checkbox"]');
-        if (toggle.checked) card.classList.add('active');
-        else card.classList.remove('active');
-    });
-}
-
-// Export to WAV
-function exportWAV() {
-    if (!audioBuffer) {
-        showStatus('No audio to export', 'error');
-        return;
-    }
-    
-    try {
-        const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
-        const url = URL.createObjectURL(wavBlob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `cleaned_vocals_${new Date().getTime()}.wav`;
-        document.body.appendChild(a);
-        a.click();
+function downloadBuffer(buffer, filename) {
+    const wav = bufferToWave(buffer);
+    const blob = new Blob([wav], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
         document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        
-        showStatus('WAV file downloaded!', 'success');
-    } catch (err) {
-        showStatus('Export error: ' + err.message, 'error');
-    }
+        URL.revokeObjectURL(url);
+    }, 100);
 }
 
-// Convert AudioBuffer to WAV Blob
-function bufferToWave(abuffer, len) {
-    let numOfChan = abuffer.numberOfChannels,
-        length = len * numOfChan * 2 + 44,
-        buffer = new ArrayBuffer(length),
-        view = new DataView(buffer),
-        channels = [], i, sample, offset = 0, pos = 0;
+function bufferToWave(abuffer) {
+    const numOfChan = abuffer.numberOfChannels;
+    const length = abuffer.length * numOfChan * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+    const channels = [];
+    let offset = 0;
+    let pos = 0;
 
-    // Write WAV header
-    setUint32(0x46464952);                         // "RIFF"
-    setUint32(length - 8);                         // file length - 8
-    setUint32(0x45564157);                         // "WAVE"
+    // Write header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + abuffer.length * numOfChan * 2, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numOfChan, true);
+    view.setUint32(24, abuffer.sampleRate, true);
+    view.setUint32(28, abuffer.sampleRate * numOfChan * 2, true);
+    view.setUint16(32, numOfChan * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, abuffer.length * numOfChan * 2, true);
 
-    setUint32(0x20746d66);                         // "fmt " chunk
-    setUint32(16);                                 // length = 16
-    setUint16(1);                                  // PCM (uncompressed)
-    setUint16(numOfChan);
-    setUint32(abuffer.sampleRate);
-    setUint32(abuffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
-    setUint16(numOfChan * 2);                      // block-align
-    setUint16(16);                                 // 16-bit (hardcoded in this demo)
-
-    setUint32(0x61746164);                         // "data" - chunk
-    setUint32(length - pos - 4);                   // chunk length
-
-    // Write interleaved data
-    for(i = 0; i < abuffer.numberOfChannels; i++)
+    for (let i = 0; i < numOfChan; i++) {
         channels.push(abuffer.getChannelData(i));
+    }
 
-    while(pos < len) {
-        for(i = 0; i < numOfChan; i++) {             // interleave channels
-            sample = Math.max(-1, Math.min(1, channels[i][pos])); // clamp
-            sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0; // scale to 16-bit signed int
-            view.setInt16(offset, sample, true);          // write 16-bit sample
+    offset = 44;
+    while (pos < abuffer.length) {
+        for (let i = 0; i < numOfChan; i++) {
+            let sample = Math.max(-1, Math.min(1, channels[i][pos]));
+            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+            view.setInt16(offset, sample, true);
             offset += 2;
         }
         pos++;
     }
 
-    return new Blob([buffer], {type: "audio/wav"});
+    return buffer;
+}
 
-    function setUint16(data) {
-        view.setUint16(pos, data, true);
-        pos += 2;
-    }
-
-    function setUint32(data) {
-        view.setUint32(pos, data, true);
-        pos += 4;
+function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
     }
 }
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+function resetAudio() {
+    currentBuffer = originalBuffer;
+    pauseTime = 0;
+    
+    // Reset UI controls
+    document.getElementById('highPass').value = 100;
+    document.getElementById('presence').value = 0;
+    document.getElementById('deesser').value = 0;
+    document.getElementById('gain').value = 0;
+    document.getElementById('gate').checked = false;
+    document.getElementById('compress').checked = true;
+    
+    // Update displays
+    document.getElementById('hpDisp').textContent = '100Hz';
+    document.getElementById('prDisp').textContent = '0dB';
+    document.getElementById('dsDisp').textContent = '0';
+    document.getElementById('gainDisp').textContent = '0dB';
+    
+    updateChain();
+    
+    if (wavesurfer) {
+        const wav = bufferToWave(originalBuffer);
+        const blob = new Blob([wav], { type: 'audio/wav' });
+        wavesurfer.loadBlob(blob);
+    }
+    
+    showStatus('Reset to original', 'success');
 }
 
-function showStatus(message, type) {
-    const status = document.getElementById('status');
-    status.textContent = message;
-    status.className = 'status ' + type;
-    status.style.display = 'block';
-    setTimeout(() => {
-        status.style.display = 'none';
-    }, 4000);
+// STEM FUNCTIONS
+async function makeVocalStem() {
+    if (!originalBuffer) return;
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        await resumeContext();
+        const length = originalBuffer.length;
+        const sampleRate = originalBuffer.sampleRate;
+        
+        // Center channel extraction (L + R) / 2
+        const newBuffer = audioCtx.createBuffer(1, length, sampleRate);
+        const left = originalBuffer.getChannelData(0);
+        const right = originalBuffer.numberOfChannels > 1 ? originalBuffer.getChannelData(1) : left;
+        const out = newBuffer.getChannelData(0);
+        
+        for (let i = 0; i < length; i++) {
+            out[i] = (left[i] + right[i]) * 0.5;
+        }
+        
+        stemBuffer = newBuffer;
+        setupStemPlayer();
+        showStatus('Vocals extracted! These are "center channel" vocals.', 'success');
+    } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
 }
 
-function showLoading(show) {
-    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+async function makeInstStem() {
+    if (!originalBuffer) return;
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        await resumeContext();
+        const length = originalBuffer.length;
+        const sampleRate = originalBuffer.sampleRate;
+        
+        // Karaoke: Side channels (L - R)
+        const newBuffer = audioCtx.createBuffer(2, length, sampleRate);
+        const left = originalBuffer.getChannelData(0);
+        const right = originalBuffer.numberOfChannels > 1 ? originalBuffer.getChannelData(1) : left;
+        const outLeft = newBuffer.getChannelData(0);
+        const outRight = newBuffer.getChannelData(1);
+        
+        for (let i = 0; i < length; i++) {
+            const side = (left[i] - right[i]) * 0.5;
+            outLeft[i] = side;
+            outRight[i] = side;
+        }
+        
+        stemBuffer = newBuffer;
+        setupStemPlayer();
+        showStatus('Instrumental extracted! (Karaoke version)', 'success');
+    } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
 }
 
-// Effect toggle styling
-document.querySelectorAll('.effect-card input[type="checkbox"]').forEach(toggle => {
-    toggle.addEventListener('change', updateEffectCards);
+function setupStemPlayer() {
+    document.getElementById('stemPlayer').classList.remove('hidden');
+    
+    if (stemWavesurfer) stemWavesurfer.destroy();
+    stemWavesurfer = WaveSurfer.create({
+        container: '#stemWave',
+        waveColor: '#34d399',
+        progressColor: '#10b981',
+        barWidth: 2,
+        height: 100
+    });
+    
+    const wav = bufferToWave(stemBuffer);
+    const blob = new Blob([wav], { type: 'audio/wav' });
+    stemWavesurfer.loadBlob(blob);
+}
+
+async function toggleStemPlay() {
+    if (isStemPlaying) {
+        if (stemSource) {
+            try { stemSource.stop(); } catch(e) {}
+            stemSource = null;
+        }
+        isStemPlaying = false;
+    } else {
+        if (!stemBuffer) return;
+        await resumeContext();
+        
+        stemSource = audioCtx.createBufferSource();
+        stemSource.buffer = stemBuffer;
+        stemSource.connect(audioCtx.destination);
+        stemSource.start();
+        isStemPlaying = true;
+        
+        stemSource.onended = () => {
+            isStemPlaying = false;
+        };
+    }
+}
+
+function exportStem() {
+    if (!stemBuffer) return;
+    downloadBuffer(stemBuffer, 'extracted_stem.wav');
+    showStatus('Stem downloaded!', 'success');
+}
+
+// MIX FUNCTIONS
+document.getElementById('beatUploadBox').addEventListener('click', () => document.getElementById('beatInput').click());
+document.getElementById('beatInput').addEventListener('change', async (e) => {
+    if (!e.target.files[0]) return;
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        await resumeContext();
+        const arrayBuffer = await e.target.files[0].arrayBuffer();
+        beatBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        document.getElementById('mixControls').classList.remove('hidden');
+        document.getElementById('beatUploadBox').style.display = 'none';
+        showStatus('Beat loaded! Adjust volumes and mix.', 'success');
+    } catch (err) {
+        showStatus('Error loading beat: ' + err.message, 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
 });
 
-function updateEffectCards() {
-    document.querySelectorAll('.effect-card').forEach(card => {
-        const toggle = card.querySelector('input[type="checkbox"]');
-        if (toggle.checked) card.classList.add('active');
-        else card.classList.remove('active');
-    });
+function updateMix() {
+    if (vocalGain) vocalGain.gain.value = document.getElementById('vocalVol').value / 100;
+    if (beatGain) beatGain.gain.value = document.getElementById('beatVolSlider').value / 100;
 }
+
+async function toggleMixPlay() {
+    if (isMixPlaying) {
+        stopMix();
+    } else {
+        await resumeContext();
+        playMix();
+    }
+}
+
+function playMix() {
+    if (!currentBuffer || !beatBuffer) {
+        showStatus('Need both vocals and beat!', 'error');
+        return;
+    }
+    
+    stopMix(); // Ensure clean state
+    
+    // Create sources
+    mixVocalSource = audioCtx.createBufferSource();
+    mixVocalSource.buffer = currentBuffer;
+    
+    mixBeatSource = audioCtx.createBufferSource();
+    mixBeatSource.buffer = beatBuffer;
+    
+    // Create gains
+    vocalGain = audioCtx.createGain();
+    beatGain = audioCtx.createGain();
+    vocalGain.gain.value = document.getElementById('vocalVol').value / 100;
+    beatGain.gain.value = document.getElementById('beatVolSlider').value / 100;
+    
+    // Connect
+    mixVocalSource.connect(vocalGain);
+    mixBeatSource.connect(beatGain);
+    vocalGain.connect(audioCtx.destination);
+    beatGain.connect(audioCtx.destination);
+    
+    // Start together
+    const when = audioCtx.currentTime + 0.1;
+    mixVocalSource.start(when);
+    mixBeatSource.start(when);
+    
+    isMixPlaying = true;
+    
+    mixVocalSource.onended = () => { isMixPlaying = false; };
+}
+
+function stopMix() {
+    if (mixVocalSource) {
+        try { mixVocalSource.stop(); } catch(e) {}
+        mixVocalSource = null;
+    }
+    if (mixBeatSource) {
+        try { mixBeatSource.stop(); } catch(e) {}
+        mixBeatSource = null;
+    }
+    isMixPlaying = false;
+}
+
+async function exportMix() {
+    if (!currentBuffer || !beatBuffer) return;
+    
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        const maxLength = Math.max(currentBuffer.length, beatBuffer.length);
+        const sampleRate = currentBuffer.sampleRate;
+        
+        const offlineCtx = new OfflineAudioContext(2, maxLength, sampleRate);
+        
+        // Vocal chain
+        const vSource = offlineCtx.createBufferSource();
+        vSource.buffer = currentBuffer;
+        const vGain = offlineCtx.createGain();
+        vGain.gain.value = document.getElementById('vocalVol').value / 100;
+        vSource.connect(vGain);
+        vGain.connect(offlineCtx.destination);
+        
+        // Beat chain
+        const bSource = offlineCtx.createBufferSource();
+        bSource.buffer = beatBuffer;
+        const bGain = offlineCtx.createGain();
+        bGain.gain.value = document.getElementById('beatVolSlider').value / 100;
+        bSource.connect(bGain);
+        bGain.connect(offlineCtx.destination);
+        
+        vSource.start();
+        bSource.start();
+        
+        const rendered = await offlineCtx.startRendering();
+        downloadBuffer(rendered, 'mixed_song.wav');
+        showStatus('Mixed track downloaded!', 'success');
+    } catch (err) {
+        showStatus('Mix failed: ' + err.message, 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+
+// UI Helpers
+// FIX 2: Properly pass and use event parameter
+function switchTab(tab, evt) {
+    // Stop all playback
+    stopAudio();
+    stopMix();
+    if (isStemPlaying) toggleStemPlay();
+    
+    // Update UI
+    document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+    evt.target.classList.add('active');
+    
+    document.getElementById('cleanTab').classList.add('hidden');
+    document.getElementById('stemsTab').classList.add('hidden');
+    document.getElementById('mixTab').classList.add('hidden');
+    
+    document.getElementById(tab + 'Tab').classList.remove('hidden');
+}
+
+function showStatus(msg, type) {
+    const status = document.getElementById('status');
+    status.textContent = msg;
+    status.className = 'status show ' + type;
+    setTimeout(() => status.classList.remove('show'), 4000);
+}
+
+// Handle page visibility change (pause when switching tabs)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isPlaying) {
+        stopAudio();
+    }
+});
 </script>
 
 </body>
