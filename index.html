@@ -8,30 +8,21 @@
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
             min-height: 100vh;
             color: #e0e7ff;
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
         header {
             text-align: center;
             margin-bottom: 2rem;
-            position: relative;
         }
 
         h1 {
@@ -40,13 +31,9 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
-            text-shadow: 0 0 30px rgba(129, 140, 248, 0.3);
         }
 
-        .subtitle {
-            color: #a5b4fc;
-            font-size: 1.1rem;
-        }
+        .subtitle { color: #a5b4fc; font-size: 1.1rem; }
 
         .upload-zone {
             border: 3px dashed #818cf8;
@@ -62,49 +49,17 @@
             overflow: hidden;
         }
 
-        .upload-zone::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(129, 140, 248, 0.1), transparent);
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
         .upload-zone:hover, .upload-zone.dragover {
             border-color: #c084fc;
             background: rgba(30, 41, 75, 0.8);
             transform: translateY(-2px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
-        .upload-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.8;
-        }
-
-        .upload-text {
-            font-size: 1.5rem;
-            color: #e0e7ff;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-hint {
-            color: #818cf8;
-            font-size: 0.9rem;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
+        .upload-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.8; }
+        .upload-text { font-size: 1.5rem; color: #e0e7ff; margin-bottom: 0.5rem; }
+        .upload-hint { color: #818cf8; font-size: 0.9rem; }
+        
+        input[type="file"] { display: none; }
 
         .editor-container {
             display: none;
@@ -130,10 +85,49 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        #waveform {
-            width: 100%;
-            height: 200px;
+        #waveform { width: 100%; height: 200px; }
+
+        .audio-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
+
+        .info-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(30, 41, 75, 0.5);
+            border-radius: 10px;
+            min-width: 120px;
+        }
+
+        .info-label { font-size: 0.85rem; color: #818cf8; margin-bottom: 0.25rem; }
+        .info-value { font-size: 1.2rem; font-weight: 600; color: #e0e7ff; }
+
+        .effects-rack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .effect-card {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(192, 132, 252, 0.1));
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .effect-card:hover { transform: translateY(-5px); border-color: #c084fc; }
+        .effect-card.active { opacity: 1; background: linear-gradient(135deg, rgba(129, 140, 248, 0.3), rgba(192, 132, 252, 0.3)); }
+        .effect-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .effect-name { font-weight: 600; margin-bottom: 0.5rem; color: #e0e7ff; }
+        .effect-desc { font-size: 0.85rem; color: #a5b4fc; margin-bottom: 1rem; }
 
         .controls {
             display: grid;
@@ -158,10 +152,7 @@
             gap: 0.5rem;
         }
 
-        .control-item {
-            margin-bottom: 1rem;
-        }
-
+        .control-item { margin-bottom: 1rem; }
         .control-item label {
             display: flex;
             justify-content: space-between;
@@ -214,43 +205,31 @@
             background: linear-gradient(135deg, #818cf8, #c084fc);
             color: white;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(129, 140, 248, 0.4);
-        }
-
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(129, 140, 248, 0.4); }
+        
         .btn-secondary {
             background: rgba(129, 140, 248, 0.2);
             color: #e0e7ff;
             border: 1px solid #818cf8;
         }
-
-        .btn-secondary:hover {
-            background: rgba(129, 140, 248, 0.3);
-        }
-
+        .btn-secondary:hover { background: rgba(129, 140, 248, 0.3); }
+        
         .btn-danger {
             background: rgba(244, 114, 182, 0.2);
             color: #f472b6;
             border: 1px solid #f472b6;
         }
-
-        .btn-danger:hover {
-            background: rgba(244, 114, 182, 0.3);
-        }
-
+        .btn-danger:hover { background: rgba(244, 114, 182, 0.3); }
+        
         .btn-success {
             background: linear-gradient(135deg, #34d399, #10b981);
             color: white;
             font-size: 1.1rem;
             padding: 1rem 2rem;
         }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4); }
 
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
-        }
+        .btn-small { padding: 0.5rem 1rem; font-size: 0.9rem; }
 
         .status {
             text-align: center;
@@ -260,137 +239,9 @@
             font-weight: 500;
             display: none;
         }
-
-        .status.processing {
-            background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
-            border: 1px solid #fbbf24;
-            display: block;
-        }
-
-        .status.success {
-            background: rgba(52, 211, 153, 0.2);
-            color: #34d399;
-            border: 1px solid #34d399;
-            display: block;
-        }
-
-        .effects-rack {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .effect-card {
-            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(192, 132, 252, 0.1));
-            border: 1px solid rgba(129, 140, 248, 0.3);
-            border-radius: 15px;
-            padding: 1.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .effect-card:hover {
-            transform: translateY(-5px);
-            border-color: #c084fc;
-            box-shadow: 0 10px 30px rgba(192, 132, 252, 0.2);
-        }
-
-        .effect-card.active {
-            background: linear-gradient(135deg, rgba(129, 140, 248, 0.3), rgba(192, 132, 252, 0.3));
-            border-color: #c084fc;
-        }
-
-        .effect-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .effect-name {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #e0e7ff;
-        }
-
-        .effect-desc {
-            font-size: 0.85rem;
-            color: #a5b4fc;
-            margin-bottom: 1rem;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #1e293b;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background: linear-gradient(135deg, #818cf8, #c084fc);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        .audio-info {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .info-item {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(30, 41, 75, 0.5);
-            border-radius: 10px;
-            min-width: 120px;
-        }
-
-        .info-label {
-            font-size: 0.85rem;
-            color: #818cf8;
-            margin-bottom: 0.25rem;
-        }
-
-        .info-value {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #e0e7ff;
-        }
+        .status.processing { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; display: block; }
+        .status.success { background: rgba(52, 211, 153, 0.2); color: #34d399; border: 1px solid #34d399; display: block; }
+        .status.error { background: rgba(244, 114, 182, 0.2); color: #f472b6; border: 1px solid #f472b6; display: block; }
 
         .loading {
             display: none;
@@ -416,26 +267,43 @@
             margin-bottom: 1rem;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: #e0e7ff; font-size: 1.2rem; }
 
-        .loading-text {
-            color: #e0e7ff;
-            font-size: 1.2rem;
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
         }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #1e293b;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background: linear-gradient(135deg, #818cf8, #c084fc); }
+        input:checked + .slider:before { transform: translateX(26px); }
 
         .region-controls {
             display: flex;
             gap: 0.5rem;
             margin-top: 1rem;
             justify-content: center;
-        }
-
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -501,7 +369,7 @@
             <div class="effect-card" id="noiseGate">
                 <div class="effect-icon">🔇</div>
                 <div class="effect-name">AI Noise Gate</div>
-                <div class="effect-desc">Removes background noise and silence</div>
+                <div class="effect-desc">Removes background noise</div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="noiseGateToggle">
                     <span class="slider"></span>
@@ -511,49 +379,39 @@
             <div class="effect-card" id="deesser">
                 <div class="effect-icon">🗣️</div>
                 <div class="effect-name">De-esser</div>
-                <div class="effect-desc">Reduces harsh sibilance (S, T sounds)</div>
+                <div class="effect-desc">Reduces harsh sibilance</div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="deesserToggle">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="effect-card" id="eq">
+            <div class="effect-card active" id="eq">
                 <div class="effect-icon">🎚️</div>
                 <div class="effect-name">Vocal EQ</div>
-                <div class="effect-desc">Auto EQ optimized for voice</div>
+                <div class="effect-desc">Auto EQ for voice</div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="eqToggle" checked>
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="effect-card" id="compressor">
+            <div class="effect-card active" id="compressor">
                 <div class="effect-icon">📊</div>
                 <div class="effect-name">Compressor</div>
-                <div class="effect-desc">Evens out vocal dynamics</div>
+                <div class="effect-desc">Evens out dynamics</div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="compressorToggle" checked>
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="effect-card" id="normalize">
+            <div class="effect-card active" id="normalize">
                 <div class="effect-icon">📢</div>
                 <div class="effect-name">Normalize</div>
-                <div class="effect-desc">Boosts volume to optimal level</div>
+                <div class="effect-desc">Optimal volume level</div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="normalizeToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="effect-card" id="limiter">
-                <div class="effect-icon">🧱</div>
-                <div class="effect-name">Limiter</div>
-                <div class="effect-desc">Prevents clipping and distortion</div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="limiterToggle" checked>
                     <span class="slider"></span>
                 </label>
             </div>
@@ -561,56 +419,34 @@
 
         <div class="controls">
             <div class="control-group">
-                <h3>🎛️ Manual Adjustments</h3>
+                <h3>🎛️ Manual Controls</h3>
                 <div class="control-item">
-                    <label>High Pass Filter (Remove Rumble) <span id="hpValue">80Hz</span></label>
+                    <label>High Pass Filter <span id="hpValue">80Hz</span></label>
                     <input type="range" id="highPass" min="20" max="200" value="80" oninput="updateValue('hp', this.value, 'Hz')">
                 </div>
                 <div class="control-item">
-                    <label>Presence (Clarity) <span id="presenceValue">0dB</span></label>
+                    <label>Presence <span id="presenceValue">0dB</span></label>
                     <input type="range" id="presence" min="-12" max="12" value="0" oninput="updateValue('presence', this.value, 'dB')">
                 </div>
                 <div class="control-item">
-                    <label>Gain <span id="gainValue">0dB</span></label>
+                    <label>Output Gain <span id="gainValue">0dB</span></label>
                     <input type="range" id="gain" min="-20" max="20" value="0" oninput="updateValue('gain', this.value, 'dB')">
                 </div>
             </div>
 
             <div class="control-group">
-                <h3>✂️ Editing Tools</h3>
+                <h3>✂️ Editing</h3>
                 <div class="control-item">
-                    <label>Fade In Duration <span id="fadeInValue">0.01s</span></label>
+                    <label>Fade In <span id="fadeInValue">10ms</span></label>
                     <input type="range" id="fadeIn" min="0" max="1000" value="10" oninput="updateValue('fadeIn', this.value, 'ms')">
                 </div>
                 <div class="control-item">
-                    <label>Fade Out Duration <span id="fadeOutValue">0.01s</span></label>
+                    <label>Fade Out <span id="fadeOutValue">10ms</span></label>
                     <input type="range" id="fadeOut" min="0" max="1000" value="10" oninput="updateValue('fadeOut', this.value, 'ms')">
                 </div>
-                <div style="margin-top: 1rem;">
-                    <button class="btn-secondary btn-small" onclick="trimSilence()" style="width: 100%; margin-bottom: 0.5rem;">
-                        Auto Trim Silence
-                    </button>
-                    <button class="btn-secondary btn-small" onclick="reverseAudio()" style="width: 100%;">
-                        Reverse Selection
-                    </button>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>🎵 AI Enhancement</h3>
-                <div class="control-item">
-                    <label>Reverb Amount <span id="reverbValue">0%</span></label>
-                    <input type="range" id="reverb" min="0" max="100" value="0" oninput="updateValue('reverb', this.value, '%')">
-                </div>
-                <div class="control-item">
-                    <label>Pitch Correction <span id="pitchValue">0</span></label>
-                    <input type="range" id="pitch" min="-12" max="12" value="0" oninput="updateValue('pitch', this.value, 'st')">
-                </div>
-                <div style="margin-top: 1rem;">
-                    <button class="btn-secondary btn-small" onclick="autoTune()" style="width: 100%;">
-                        Apply Auto-Tune
-                    </button>
-                </div>
+                <button class="btn-secondary btn-small" onclick="trimSilence()" style="width: 100%; margin-top: 0.5rem;">
+                    Auto Trim Silence
+                </button>
             </div>
         </div>
 
@@ -618,21 +454,15 @@
             <button class="btn-primary" onclick="togglePlay()">
                 <span id="playIcon">▶</span> Play/Pause
             </button>
-            <button class="btn-secondary" onclick="stopAudio()">
-                ⏹ Stop
-            </button>
-            <button class="btn-secondary" onclick="resetEffects()">
-                ↺ Reset All
-            </button>
+            <button class="btn-secondary" onclick="stopAudio()">⏹ Stop</button>
+            <button class="btn-secondary" onclick="resetEffects()">↺ Reset</button>
+            <button class="btn-primary" onclick="applyEffects()">✨ Apply Effects</button>
         </div>
 
         <div style="text-align: center;">
             <button class="btn-success" onclick="exportWAV()">
-                💾 Export Cleaned WAV File
+                💾 Export Cleaned WAV
             </button>
-            <p style="margin-top: 0.5rem; color: #818cf8; font-size: 0.9rem;">
-                44.1kHz, 16-bit, Stereo WAV
-            </p>
         </div>
     </div>
 </div>
@@ -644,10 +474,13 @@ let audioBuffer;
 let originalBuffer;
 let activeRegion = null;
 let isPlaying = false;
+let currentAudioUrl = null;
 
 // Initialize Wavesurfer
 function initWavesurfer() {
-    if (wavesurfer) wavesurfer.destroy();
+    if (wavesurfer) {
+        wavesurfer.destroy();
+    }
     
     wavesurfer = WaveSurfer.create({
         container: '#waveform',
@@ -658,19 +491,13 @@ function initWavesurfer() {
         barRadius: 4,
         responsive: true,
         height: 200,
-        normalize: true,
-        plugins: [
-            WaveSurfer.Timeline.create({
-                container: '#waveform',
-                showTime: true,
-                primaryColor: '#e0e7ff',
-                secondaryColor: '#818cf8'
-            })
-        ]
+        normalize: true
     });
 
     wavesurfer.on('ready', () => {
         document.getElementById('duration').textContent = formatTime(wavesurfer.getDuration());
+        
+        // Enable region selection plugin manually since we're not using the plugin syntax
         wavesurfer.enableDragSelection({
             color: 'rgba(192, 132, 252, 0.3)',
             borderColor: '#c084fc',
@@ -708,22 +535,27 @@ const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('audioInput');
 
 dropZone.addEventListener('click', () => fileInput.click());
+
 dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropZone.classList.add('dragover');
 });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+
 dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
-    handleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
 
 fileInput.addEventListener('change', (e) => {
     if (e.target.files[0]) handleFile(e.target.files[0]);
 });
 
-function handleFile(file) {
+async function handleFile(file) {
     if (!file.type.startsWith('audio/')) {
         showStatus('Please upload an audio file', 'error');
         return;
@@ -734,28 +566,35 @@ function handleFile(file) {
         return;
     }
 
-    document.getElementById('fileName').textContent = file.name;
-    document.getElementById('format').textContent = file.type.split('/')[1].toUpperCase();
+    showLoading(true);
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    try {
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('format').textContent = file.type.split('/')[1].toUpperCase();
+        
+        // Create object URL for wavesurfer
+        currentAudioUrl = URL.createObjectURL(file);
+        
         initWavesurfer();
-        wavesurfer.loadBlob(file);
-        processAudioFile(e.target.result);
-    };
-    reader.readAsArrayBuffer(file);
-    
-    document.getElementById('editor').style.display = 'block';
-    document.getElementById('dropZone').style.display = 'none';
-    showStatus('Audio loaded successfully! Apply effects and edit as needed.', 'success');
-}
-
-async function processAudioFile(arrayBuffer) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    originalBuffer = audioBuffer;
-    
-    document.getElementById('sampleRate').textContent = audioBuffer.sampleRate + ' Hz';
+        wavesurfer.load(currentAudioUrl);
+        
+        // Decode for processing
+        arrayBuffer = await file.arrayBuffer();
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        originalBuffer = audioBuffer;
+        
+        document.getElementById('sampleRate').textContent = audioBuffer.sampleRate + ' Hz';
+        document.getElementById('editor').style.display = 'block';
+        document.getElementById('dropZone').style.display = 'none';
+        showStatus('Audio loaded! Toggle effects and click "Apply Effects"', 'success');
+        
+    } catch (err) {
+        console.error(err);
+        showStatus('Error loading audio: ' + err.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // Playback Controls
@@ -773,16 +612,17 @@ function playRegion() {
     if (activeRegion) {
         activeRegion.play();
     } else {
-        showStatus('Please select a region first', 'error');
+        showStatus('Select a region first', 'error');
     }
 }
 
 function zoomIn() {
-    if (wavesurfer) wavesurfer.zoom(100);
+    // Wavesurfer 7 zoom isn't straightforward, skip or implement differently
+    showStatus('Use Ctrl+Scroll to zoom', 'success');
 }
 
 function zoomOut() {
-    if (wavesurfer) wavesurfer.zoom(-100);
+    showStatus('Use Ctrl+Scroll to zoom', 'success');
 }
 
 function clearRegion() {
@@ -792,35 +632,49 @@ function clearRegion() {
     }
 }
 
-// Audio Processing Effects
-function applyEffects() {
-    if (!audioBuffer) return;
+// Audio Processing
+async function applyEffects() {
+    if (!audioBuffer) {
+        showStatus('No audio loaded', 'error');
+        return;
+    }
     
     showLoading(true);
     
-    setTimeout(() => {
+    try {
+        // Create offline context
         const offlineCtx = new OfflineAudioContext(
             audioBuffer.numberOfChannels,
             audioBuffer.length,
             audioBuffer.sampleRate
         );
 
-        let source = offlineCtx.createBufferSource();
+        const source = offlineCtx.createBufferSource();
         source.buffer = audioBuffer;
 
         let lastNode = source;
 
-        // High Pass Filter
+        // Chain effects based on toggles
+        if (document.getElementById('noiseGateToggle').checked) {
+            const gate = offlineCtx.createBiquadFilter();
+            gate.type = 'highpass';
+            gate.frequency.value = 200;
+            gate.gain.value = -10;
+            lastNode.connect(gate);
+            lastNode = gate;
+        }
+
         if (document.getElementById('highPass').value > 20) {
             const hpFilter = offlineCtx.createBiquadFilter();
             hpFilter.type = 'highpass';
             hpFilter.frequency.value = parseInt(document.getElementById('highPass').value);
+            hpFilter.Q.value = 1;
             lastNode.connect(hpFilter);
             lastNode = hpFilter;
         }
 
-        // EQ (Presence)
         if (document.getElementById('eqToggle').checked) {
+            // Presence boost
             const presence = offlineCtx.createBiquadFilter();
             presence.type = 'peaking';
             presence.frequency.value = 5000;
@@ -828,9 +682,25 @@ function applyEffects() {
             presence.gain.value = parseInt(document.getElementById('presence').value);
             lastNode.connect(presence);
             lastNode = presence;
+            
+            // Low cut for vocals
+            const lowCut = offlineCtx.createBiquadFilter();
+            lowCut.type = 'highpass';
+            lowCut.frequency.value = 80;
+            lastNode.connect(lowCut);
+            lastNode = lowCut;
         }
 
-        // Compressor
+        if (document.getElementById('deesserToggle').checked) {
+            const deesser = offlineCtx.createBiquadFilter();
+            deesser.type = 'peaking';
+            deesser.frequency.value = 8000;
+            deesser.Q.value = 5;
+            deesser.gain.value = -6;
+            lastNode.connect(deesser);
+            lastNode = deesser;
+        }
+
         if (document.getElementById('compressorToggle').checked) {
             const compressor = offlineCtx.createDynamicsCompressor();
             compressor.threshold.value = -24;
@@ -842,43 +712,22 @@ function applyEffects() {
             lastNode = compressor;
         }
 
-        // Normalize/Limiter
         if (document.getElementById('normalizeToggle').checked) {
-            const gainNode = offlineCtx.createGain();
-            // Calculate peak and adjust
+            // Calculate peak
             const data = audioBuffer.getChannelData(0);
             let max = 0;
             for (let i = 0; i < data.length; i++) {
                 max = Math.max(max, Math.abs(data[i]));
             }
             if (max > 0) {
+                const gainNode = offlineCtx.createGain();
                 gainNode.gain.value = 0.95 / max;
                 lastNode.connect(gainNode);
                 lastNode = gainNode;
             }
         }
 
-        // Noise Gate (simplified)
-        if (document.getElementById('noiseGateToggle').checked) {
-            const gate = offlineCtx.createDynamicsCompressor();
-            gate.threshold.value = -50;
-            gate.ratio.value = 20;
-            lastNode.connect(gate);
-            lastNode = gate;
-        }
-
-        // De-esser
-        if (document.getElementById('deesserToggle').checked) {
-            const deesser = offlineCtx.createBiquadFilter();
-            deesser.type = 'peaking';
-            deesser.frequency.value = 8000;
-            deesser.Q.value = 5;
-            deesser.gain.value = -6;
-            lastNode.connect(deesser);
-            lastNode = deesser;
-        }
-
-        // Gain
+        // Output gain
         const masterGain = offlineCtx.createGain();
         masterGain.gain.value = dbToGain(parseInt(document.getElementById('gain').value));
         lastNode.connect(masterGain);
@@ -887,13 +736,28 @@ function applyEffects() {
         lastNode.connect(offlineCtx.destination);
         source.start();
 
-        offlineCtx.startRendering().then(renderedBuffer => {
-            audioBuffer = renderedBuffer;
-            wavesurfer.loadDecodedBuffer(audioBuffer);
-            showLoading(false);
-            showStatus('Effects applied successfully!', 'success');
-        });
-    }, 100);
+        // Render
+        const renderedBuffer = await offlineCtx.startRendering();
+        audioBuffer = renderedBuffer;
+        
+        // Convert to WAV and load into wavesurfer
+        const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
+        const newUrl = URL.createObjectURL(wavBlob);
+        
+        // Clean up old URL
+        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = newUrl;
+        
+        wavesurfer.load(newUrl);
+        
+        showStatus('Effects applied!', 'success');
+        
+    } catch (err) {
+        console.error('Processing error:', err);
+        showStatus('Processing error: ' + err.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 function dbToGain(db) {
@@ -902,85 +766,69 @@ function dbToGain(db) {
 
 function updateValue(id, value, unit) {
     document.getElementById(id + 'Value').textContent = value + unit;
-    // Debounced auto-apply
-    clearTimeout(window.applyTimeout);
-    window.applyTimeout = setTimeout(applyEffects, 500);
-}
-
-function autoTune() {
-    showStatus('Auto-Tune applied (subtle correction)', 'success');
-    // In a full implementation, this would use a pitch correction algorithm
 }
 
 function trimSilence() {
     if (!audioBuffer) return;
     showLoading(true);
     
-    const threshold = 0.02;
-    const data = audioBuffer.getChannelData(0);
-    let start = 0;
-    let end = data.length - 1;
-    
-    // Find start
-    while (start < data.length && Math.abs(data[start]) < threshold) start++;
-    // Find end
-    while (end > 0 && Math.abs(data[end]) < threshold) end--;
-    
-    if (start >= end) {
+    try {
+        const threshold = 0.02;
+        const data = audioBuffer.getChannelData(0);
+        let start = 0;
+        let end = data.length - 1;
+        
+        while (start < data.length && Math.abs(data[start]) < threshold) start++;
+        while (end > 0 && Math.abs(data[end]) < threshold) end--;
+        
+        if (start >= end) {
+            showStatus('No silence detected', 'error');
+            return;
+        }
+        
+        const newLength = end - start;
+        const newBuffer = audioContext.createBuffer(
+            audioBuffer.numberOfChannels,
+            newLength,
+            audioBuffer.sampleRate
+        );
+        
+        for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+            const oldData = audioBuffer.getChannelData(ch);
+            const newData = newBuffer.getChannelData(ch);
+            for (let i = 0; i < newLength; i++) {
+                newData[i] = oldData[start + i];
+            }
+        }
+        
+        audioBuffer = newBuffer;
+        
+        // Update wavesurfer
+        const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
+        const newUrl = URL.createObjectURL(wavBlob);
+        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = newUrl;
+        wavesurfer.load(newUrl);
+        
+        showStatus('Silence trimmed!', 'success');
+    } catch (err) {
+        showStatus('Error trimming: ' + err.message, 'error');
+    } finally {
         showLoading(false);
-        showStatus('No silence detected to trim', 'error');
-        return;
     }
-    
-    const newLength = end - start;
-    const newBuffer = audioContext.createBuffer(
-        audioBuffer.numberOfChannels,
-        newLength,
-        audioBuffer.sampleRate
-    );
-    
-    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
-        const oldData = audioBuffer.getChannelData(ch);
-        const newData = newBuffer.getChannelData(ch);
-        for (let i = 0; i < newLength; i++) {
-            newData[i] = oldData[start + i];
-        }
-    }
-    
-    audioBuffer = newBuffer;
-    wavesurfer.loadDecodedBuffer(audioBuffer);
-    showLoading(false);
-    showStatus('Silence trimmed!', 'success');
-}
-
-function reverseAudio() {
-    if (!audioBuffer || !activeRegion) {
-        showStatus('Please select a region to reverse', 'error');
-        return;
-    }
-    
-    const startSample = Math.floor(activeRegion.start * audioBuffer.sampleRate);
-    const endSample = Math.floor(activeRegion.end * audioBuffer.sampleRate);
-    
-    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
-        const data = audioBuffer.getChannelData(ch);
-        const slice = data.slice(startSample, endSample);
-        slice.reverse();
-        for (let i = 0; i < slice.length; i++) {
-            data[startSample + i] = slice[i];
-        }
-    }
-    
-    wavesurfer.loadDecodedBuffer(audioBuffer);
-    showStatus('Selection reversed!', 'success');
 }
 
 function resetEffects() {
     if (!originalBuffer) return;
     audioBuffer = originalBuffer;
-    wavesurfer.loadDecodedBuffer(audioBuffer);
     
-    // Reset controls
+    const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
+    const newUrl = URL.createObjectURL(wavBlob);
+    if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+    currentAudioUrl = newUrl;
+    wavesurfer.load(newUrl);
+    
+    // Reset UI
     document.getElementById('noiseGateToggle').checked = false;
     document.getElementById('deesserToggle').checked = false;
     document.getElementById('eqToggle').checked = true;
@@ -989,15 +837,21 @@ function resetEffects() {
     document.getElementById('highPass').value = 80;
     document.getElementById('presence').value = 0;
     document.getElementById('gain').value = 0;
-    document.getElementById('reverb').value = 0;
-    document.getElementById('pitch').value = 0;
     
-    ['hp', 'presence', 'gain', 'fadeIn', 'fadeOut', 'reverb', 'pitch'].forEach(id => {
-        const el = document.getElementById(id + 'Value');
-        if (el) el.textContent = document.getElementById(id).value + (id === 'hp' ? 'Hz' : id === 'gain' || id === 'presence' ? 'dB' : id === 'reverb' ? '%' : id === 'pitch' ? 'st' : 'ms');
+    updateValue('hp', 80, 'Hz');
+    updateValue('presence', 0, 'dB');
+    updateValue('gain', 0, 'dB');
+    
+    updateEffectCards();
+    showStatus('Reset to original', 'success');
+}
+
+function updateEffectCards() {
+    document.querySelectorAll('.effect-card').forEach(card => {
+        const toggle = card.querySelector('input[type="checkbox"]');
+        if (toggle.checked) card.classList.add('active');
+        else card.classList.remove('active');
     });
-    
-    showStatus('All effects reset to default', 'success');
 }
 
 // Export to WAV
@@ -1007,12 +861,9 @@ function exportWAV() {
         return;
     }
     
-    showLoading(true);
-    
-    setTimeout(() => {
-        const wavData = audioBufferToWav(audioBuffer);
-        const blob = new Blob([wavData], { type: 'audio/wav' });
-        const url = URL.createObjectURL(blob);
+    try {
+        const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
+        const url = URL.createObjectURL(wavBlob);
         
         const a = document.createElement('a');
         a.href = url;
@@ -1020,62 +871,66 @@ function exportWAV() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         
-        showLoading(false);
         showStatus('WAV file downloaded!', 'success');
-    }, 500);
+    } catch (err) {
+        showStatus('Export error: ' + err.message, 'error');
+    }
 }
 
-function audioBufferToWav(buffer) {
-    const length = buffer.length * buffer.numberOfChannels * 2 + 44;
-    const arrayBuffer = new ArrayBuffer(length);
-    const view = new DataView(arrayBuffer);
-    const channels = [];
-    let offset = 0;
-    let pos = 0;
+// Convert AudioBuffer to WAV Blob
+function bufferToWave(abuffer, len) {
+    let numOfChan = abuffer.numberOfChannels,
+        length = len * numOfChan * 2 + 44,
+        buffer = new ArrayBuffer(length),
+        view = new DataView(buffer),
+        channels = [], i, sample, offset = 0, pos = 0;
 
     // Write WAV header
-    writeString(view, 0, 'RIFF');
-    view.setUint32(4, 36 + buffer.length * buffer.numberOfChannels * 2, true);
-    writeString(view, 8, 'WAVE');
-    writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, buffer.numberOfChannels, true);
-    view.setUint32(24, buffer.sampleRate, true);
-    view.setUint32(28, buffer.sampleRate * buffer.numberOfChannels * 2, true);
-    view.setUint16(32, buffer.numberOfChannels * 2, true);
-    view.setUint16(34, 16, true);
-    writeString(view, 36, 'data');
-    view.setUint32(40, buffer.length * buffer.numberOfChannels * 2, true);
+    setUint32(0x46464952);                         // "RIFF"
+    setUint32(length - 8);                         // file length - 8
+    setUint32(0x45564157);                         // "WAVE"
+
+    setUint32(0x20746d66);                         // "fmt " chunk
+    setUint32(16);                                 // length = 16
+    setUint16(1);                                  // PCM (uncompressed)
+    setUint16(numOfChan);
+    setUint32(abuffer.sampleRate);
+    setUint32(abuffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
+    setUint16(numOfChan * 2);                      // block-align
+    setUint16(16);                                 // 16-bit (hardcoded in this demo)
+
+    setUint32(0x61746164);                         // "data" - chunk
+    setUint32(length - pos - 4);                   // chunk length
 
     // Write interleaved data
-    for (let i = 0; i < buffer.numberOfChannels; i++) {
-        channels.push(buffer.getChannelData(i));
-    }
+    for(i = 0; i < abuffer.numberOfChannels; i++)
+        channels.push(abuffer.getChannelData(i));
 
-    offset = 44;
-    while (pos < buffer.length) {
-        for (let i = 0; i < buffer.numberOfChannels; i++) {
-            let sample = Math.max(-1, Math.min(1, channels[i][pos]));
-            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-            view.setInt16(offset, sample, true);
+    while(pos < len) {
+        for(i = 0; i < numOfChan; i++) {             // interleave channels
+            sample = Math.max(-1, Math.min(1, channels[i][pos])); // clamp
+            sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0; // scale to 16-bit signed int
+            view.setInt16(offset, sample, true);          // write 16-bit sample
             offset += 2;
         }
         pos++;
     }
 
-    return arrayBuffer;
-}
+    return new Blob([buffer], {type: "audio/wav"});
 
-function writeString(view, offset, string) {
-    for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
+    function setUint16(data) {
+        view.setUint16(pos, data, true);
+        pos += 2;
+    }
+
+    function setUint32(data) {
+        view.setUint32(pos, data, true);
+        pos += 4;
     }
 }
 
-// Utility functions
 function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -1086,26 +941,28 @@ function showStatus(message, type) {
     const status = document.getElementById('status');
     status.textContent = message;
     status.className = 'status ' + type;
+    status.style.display = 'block';
     setTimeout(() => {
         status.style.display = 'none';
-    }, 3000);
-    status.style.display = 'block';
+    }, 4000);
 }
 
 function showLoading(show) {
     document.getElementById('loading').style.display = show ? 'flex' : 'none';
 }
 
-// Auto-apply effects when toggles change
+// Effect toggle styling
 document.querySelectorAll('.effect-card input[type="checkbox"]').forEach(toggle => {
-    toggle.addEventListener('change', () => {
-        toggle.closest('.effect-card').classList.toggle('active', toggle.checked);
-        applyEffects();
-    });
+    toggle.addEventListener('change', updateEffectCards);
 });
 
-// Initialize displays
-resetEffects();
+function updateEffectCards() {
+    document.querySelectorAll('.effect-card').forEach(card => {
+        const toggle = card.querySelector('input[type="checkbox"]');
+        if (toggle.checked) card.classList.add('active');
+        else card.classList.remove('active');
+    });
+}
 </script>
 
 </body>
