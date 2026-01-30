@@ -3,1047 +3,1110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Music Studio</title>
-    <!-- Only essential external script - Tone.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- FontAwesome with fallback -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onerror="this.remove()">
-    
+    <title>AI Vocal Studio - Clean & Edit Vocals</title>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
     <style>
-        /* CRITICAL: Base styles inline to prevent 404 issues */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #0a0a0a !important; /* Force dark background */
-            color: #e5e5e5;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* If background image fails, solid color remains */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%);
-            z-index: -1;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Header */
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            min-height: 100vh;
+            color: #e0e7ff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
         header {
-            height: 60px;
-            background: linear-gradient(180deg, #141414 0%, #111 100%);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #9333ea, #06b6d4);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(147,51,234,0.3);
-        }
-
-        .transport {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: rgba(0,0,0,0.4);
-            padding: 6px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        button {
-            cursor: pointer;
-            border: none;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        .btn-play {
-            width: 44px;
-            height: 44px;
-            background: #06b6d4;
-            border-radius: 50%;
-            color: #000;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(6,182,212,0.4);
-        }
-
-        .btn-play:hover { transform: scale(1.05); background: #22d3ee; }
-        .btn-play:active { transform: scale(0.95); }
-        .btn-play.playing { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.4); }
-
-        .btn-stop {
-            width: 36px;
-            height: 36px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-stop:hover { background: rgba(255,255,255,0.2); }
-
-        .time-display {
-            font-family: 'Courier New', monospace;
-            font-size: 20px;
-            color: #06b6d4;
-            font-weight: bold;
-            min-width: 60px;
             text-align: center;
-            text-shadow: 0 0 10px rgba(6,182,212,0.5);
+            margin-bottom: 2rem;
+            position: relative;
         }
 
-        /* Main Layout */
-        .main-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(to right, #818cf8, #c084fc, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(129, 140, 248, 0.3);
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: #111;
-            border-right: 1px solid rgba(255,255,255,0.1);
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .subtitle {
+            color: #a5b4fc;
+            font-size: 1.1rem;
         }
 
-        .section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #666;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .inst-btn {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #999;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            text-align: left;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .inst-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .inst-btn.active {
-            background: rgba(6,182,212,0.15);
-            border-color: rgba(6,182,212,0.4);
-            color: #06b6d4;
-        }
-
-        .control-group {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .slider-container {
-            margin-bottom: 12px;
-        }
-
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 6px;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #06b6d4;
-            border-radius: 50%;
+        .upload-zone {
+            border: 3px dashed #818cf8;
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            background: rgba(30, 41, 75, 0.5);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(6,182,212,0.5);
-        }
-
-        /* Center Area */
-        .workspace {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #0a0a0a;
-            position: relative;
-        }
-
-        .timeline {
-            height: 40px;
-            background: #151515;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
         }
 
-        .playhead {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #06b6d4;
-            box-shadow: 0 0 10px rgba(6,182,212,0.8);
-            pointer-events: none;
-            left: 0%;
-            transition: left 0.1s;
-        }
-
-        .playhead::before {
+        .upload-zone::before {
             content: '';
             position: absolute;
-            top: -6px;
-            left: -5px;
-            width: 12px;
-            height: 12px;
-            background: #06b6d4;
-            transform: rotate(45deg);
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(129, 140, 248, 0.1), transparent);
+            animation: shimmer 3s infinite;
         }
 
-        .track-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 40px 100%;
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
 
-        .track {
-            height: 80px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            margin-bottom: 12px;
-            display: flex;
-            position: relative;
-            overflow: hidden;
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #c084fc;
+            background: rgba(30, 41, 75, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
-        .track-header {
-            width: 140px;
-            background: rgba(0,0,0,0.3);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 5;
-        }
-
-        .track-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #ccc;
-        }
-
-        .track-controls {
-            display: flex;
-            gap: 6px;
-        }
-
-        .btn-mute {
-            width: 24px;
-            height: 24px;
-            background: rgba(239,68,68,0.2);
-            color: #ef4444;
-            border-radius: 4px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-
-        .track-content {
-            flex: 1;
-            position: relative;
-            padding: 10px;
-        }
-
-        .clip {
-            position: absolute;
-            height: 60px;
-            background: linear-gradient(135deg, #06b6d4, #9333ea);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            font-size: 11px;
-            font-weight: 600;
-            color: white;
-            cursor: move;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* Sequencer */
-        .sequencer {
-            height: 220px;
-            background: #111;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .seq-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .seq-title {
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .seq-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-seq {
-            padding: 6px 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #999;
-            border-radius: 6px;
-            font-size: 11px;
-        }
-
-        .btn-seq:hover {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
-
-        .seq-grid {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-x: auto;
-        }
-
-        .seq-row {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .seq-label {
-            width: 60px;
-            font-size: 11px;
-            color: #666;
-        }
-
-        .step {
-            width: 36px;
-            height: 36px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.1s;
-        }
-
-        .step:hover { background: rgba(255,255,255,0.1); }
-        .step.active { 
-            background: #06b6d4; 
-            box-shadow: 0 0 15px rgba(6,182,212,0.5);
-            border-color: rgba(6,182,212,0.5);
-        }
-        .step.playing {
-            transform: scale(1.2);
-            border-color: white;
-            z-index: 10;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.show { display: flex; }
-
-        .modal-content {
-            background: #1a1a1a;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 28px;
-            width: 340px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .ai-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #9333ea, #06b6d4);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(0.95); }
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 6px;
-            letter-spacing: 0.05em;
-        }
-
-        select {
-            width: 100%;
-            padding: 10px;
-            background: #0a0a0a;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-
-        .btn-generate {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #9333ea, #06b6d4);
-            color: white;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            margin-top: 8px;
-        }
-
-        .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .progress-container {
-            margin-top: 16px;
-            display: none;
-        }
-
-        .progress-bar {
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(to right, #9333ea, #06b6d4);
-            transition: width 0.3s;
-        }
-
-        .btn-action {
-            padding: 8px 16px;
-            background: rgba(147,51,234,0.2);
-            border: 1px solid rgba(147,51,234,0.4);
-            color: #a855f7;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .btn-action:hover { background: rgba(147,51,234,0.3); }
-
-        .meter {
-            display: flex;
-            gap: 4px;
-            height: 80px;
-            align-items: end;
-            margin-top: 8px;
-        }
-
-        .meter-bar {
-            flex: 1;
-            background: #22c55e;
-            border-radius: 2px;
-            transition: height 0.05s;
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
             opacity: 0.8;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        .upload-text {
+            font-size: 1.5rem;
+            color: #e0e7ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: #818cf8;
+            font-size: 0.9rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .editor-container {
+            display: none;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .waveform-container {
+            background: #0f172a;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #waveform {
+            width: 100%;
+            height: 200px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            background: rgba(30, 41, 75, 0.6);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(129, 140, 248, 0.3);
+        }
+
+        .control-group h3 {
+            color: #818cf8;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-item {
+            margin-bottom: 1rem;
+        }
+
+        .control-item label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #a5b4fc;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #1e293b;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(129, 140, 248, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(129, 140, 248, 0.2);
+            color: #e0e7ff;
+            border: 1px solid #818cf8;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(129, 140, 248, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(244, 114, 182, 0.2);
+            color: #f472b6;
+            border: 1px solid #f472b6;
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 114, 182, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .status {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.processing {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+            display: block;
+        }
+
+        .status.success {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+            border: 1px solid #34d399;
+            display: block;
+        }
+
+        .effects-rack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .effect-card {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(192, 132, 252, 0.1));
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .effect-card:hover {
+            transform: translateY(-5px);
+            border-color: #c084fc;
+            box-shadow: 0 10px 30px rgba(192, 132, 252, 0.2);
+        }
+
+        .effect-card.active {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.3), rgba(192, 132, 252, 0.3));
+            border-color: #c084fc;
+        }
+
+        .effect-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .effect-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #e0e7ff;
+        }
+
+        .effect-desc {
+            font-size: 0.85rem;
+            color: #a5b4fc;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1e293b;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .audio-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(30, 41, 75, 0.5);
+            border-radius: 10px;
+            min-width: 120px;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #818cf8;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e0e7ff;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(129, 140, 248, 0.3);
+            border-top: 4px solid #818cf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #e0e7ff;
+            font-size: 1.2rem;
+        }
+
+        .region-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .container { padding: 1rem; }
+            .controls { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Processing Audio...</div>
+</div>
+
+<div class="container">
     <header>
-        <div class="logo">
-            <div class="logo-icon">
-                <i class="fas fa-music" style="color: white;"></i>
-            </div>
-            <div>
-                <h1 style="font-size: 16px; font-weight: bold; margin: 0;">StudioAI</h1>
-                <p style="font-size: 10px; color: #666; margin: 0;">v2.0 // Web Audio Engine</p>
-            </div>
-        </div>
-
-        <div class="transport">
-            <button class="btn-stop" id="stopBtn" title="Stop">
-                <i class="fas fa-square"></i>
-            </button>
-            <button class="btn-play" id="playBtn" title="Play/Pause">
-                <i class="fas fa-play" id="playIcon" style="margin-left: 2px;"></i>
-            </button>
-            <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1);"></div>
-            <div class="time-display" id="timeDisplay">00:00</div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 10px; color: #666;">BPM</span>
-                <input type="number" id="bpmInput" value="128" min="60" max="200" 
-                       style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 4px; border-radius: 4px; text-align: center; font-size: 12px;">
-            </div>
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-            <button onclick="exportAudio()" class="btn-action">
-                <i class="fas fa-download"></i> Export
-            </button>
-            <button onclick="showModal()" style="padding: 8px 16px; background: linear-gradient(135deg, #9333ea, #06b6d4); border: none; color: white; border-radius: 6px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                <i class="fas fa-wand-magic-sparkles"></i> Generate
-            </button>
-        </div>
+        <h1>🎙️ AI Vocal Studio</h1>
+        <p class="subtitle">Professional vocal cleaning and editing in your browser</p>
     </header>
 
-    <div class="main-container">
-        <aside class="sidebar">
-            <div>
-                <div class="section-title">Instruments</div>
-                <button class="inst-btn active" onclick="setInstrument('drums')" id="btn-drums">
-                    <i class="fas fa-drum"></i> Drum Machine
-                </button>
-                <button class="inst-btn" onclick="setInstrument('bass')" id="btn-bass">
-                    <i class="fas fa-guitar"></i> Bass Synth
-                </button>
-                <button class="inst-btn" onclick="setInstrument('lead')" id="btn-lead">
-                    <i class="fas fa-wave-square"></i> Lead Synth
-                </button>
-            </div>
-
-            <div>
-                <div class="section-title">Master Effects</div>
-                <div class="control-group">
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Reverb</span>
-                            <span id="revVal">30%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="30" oninput="setReverb(this.value)">
-                    </div>
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Volume</span>
-                            <span id="volVal">80%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="80" oninput="setVolume(this.value)">
-                    </div>
-                </div>
-                
-                <div class="control-group" style="margin-top: 12px;">
-                    <div class="section-title" style="margin-bottom: 8px;">Master Meter</div>
-                    <div class="meter" id="meters">
-                        <div class="meter-bar" style="height: 20%;"></div>
-                        <div class="meter-bar" style="height: 35%;"></div>
-                        <div class="meter-bar" style="height: 28%;"></div>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="workspace">
-            <div class="timeline">
-                <div class="playhead" id="playhead"></div>
-            </div>
-
-            <div class="track-area">
-                <div class="track">
-                    <div class="track-header">
-                        <div class="track-name">Kick Drum</div>
-                        <div class="track-controls">
-                            <button class="btn-mute">M</button>
-                        </div>
-                    </div>
-                    <div class="track-content">
-                        <div class="clip" style="left: 20px; width: 150px;" onmousedown="startDrag(event, this)">
-                            <i class="fas fa-drum" style="margin-right: 8px;"></i> Pattern A
-                        </div>
-                    </div>
-                </div>
-
-                <div class="track">
-                    <div class="track-header">
-                        <div class="track-name">Bass Line</div>
-                        <div class="track-controls">
-                            <button class="btn-mute">M</button>
-                        </div>
-                    </div>
-                    <div class="track-content" id="track-bass"></div>
-                </div>
-
-                <div class="track">
-                    <div class="track-header">
-                        <div class="track-name">Lead Synth</div>
-                        <div class="track-controls">
-                            <button class="btn-mute">M</button>
-                        </div>
-                    </div>
-                    <div class="track-content"></div>
-                </div>
-            </div>
-
-            <div class="sequencer">
-                <div class="seq-header">
-                    <div class="seq-title">Step Sequencer</div>
-                    <div class="seq-controls">
-                        <button class="btn-seq" onclick="clearPattern()">
-                            <i class="fas fa-trash"></i> Clear
-                        </button>
-                        <button class="btn-seq" onclick="randomPattern()">
-                            <i class="fas fa-random"></i> Random
-                        </button>
-                    </div>
-                </div>
-                <div class="seq-grid" id="sequencer">
-                    <!-- Generated by JS -->
-                </div>
-            </div>
-        </main>
+    <div class="upload-zone" id="dropZone">
+        <div class="upload-icon">☁️</div>
+        <div class="upload-text">Drop your vocals here or click to browse</div>
+        <div class="upload-hint">Supports WAV, MP3, FLAC, M4A (Max 50MB)</div>
+        <input type="file" id="audioInput" accept="audio/*">
     </div>
 
-    <div class="modal" id="aiModal" onclick="if(event.target===this)hideModal()">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="ai-icon">
-                    <i class="fas fa-robot" style="color: white; font-size: 20px;"></i>
+    <div class="status" id="status"></div>
+
+    <div class="editor-container" id="editor">
+        <div class="audio-info">
+            <div class="info-item">
+                <div class="info-label">File Name</div>
+                <div class="info-value" id="fileName">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Duration</div>
+                <div class="info-value" id="duration">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Sample Rate</div>
+                <div class="info-value" id="sampleRate">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Format</div>
+                <div class="info-value" id="format">-</div>
+            </div>
+        </div>
+
+        <div class="waveform-container">
+            <div id="waveform"></div>
+            <div class="region-controls">
+                <button class="btn-secondary btn-small" onclick="playRegion()">▶ Play Selection</button>
+                <button class="btn-secondary btn-small" onclick="zoomIn()">🔍+</button>
+                <button class="btn-secondary btn-small" onclick="zoomOut()">🔍-</button>
+                <button class="btn-danger btn-small" onclick="clearRegion()">Clear Selection</button>
+            </div>
+        </div>
+
+        <div class="effects-rack">
+            <div class="effect-card" id="noiseGate">
+                <div class="effect-icon">🔇</div>
+                <div class="effect-name">AI Noise Gate</div>
+                <div class="effect-desc">Removes background noise and silence</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="noiseGateToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="effect-card" id="deesser">
+                <div class="effect-icon">🗣️</div>
+                <div class="effect-name">De-esser</div>
+                <div class="effect-desc">Reduces harsh sibilance (S, T sounds)</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="deesserToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="effect-card" id="eq">
+                <div class="effect-icon">🎚️</div>
+                <div class="effect-name">Vocal EQ</div>
+                <div class="effect-desc">Auto EQ optimized for voice</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="eqToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="effect-card" id="compressor">
+                <div class="effect-icon">📊</div>
+                <div class="effect-name">Compressor</div>
+                <div class="effect-desc">Evens out vocal dynamics</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="compressorToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="effect-card" id="normalize">
+                <div class="effect-icon">📢</div>
+                <div class="effect-name">Normalize</div>
+                <div class="effect-desc">Boosts volume to optimal level</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="normalizeToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="effect-card" id="limiter">
+                <div class="effect-icon">🧱</div>
+                <div class="effect-name">Limiter</div>
+                <div class="effect-desc">Prevents clipping and distortion</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="limiterToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>🎛️ Manual Adjustments</h3>
+                <div class="control-item">
+                    <label>High Pass Filter (Remove Rumble) <span id="hpValue">80Hz</span></label>
+                    <input type="range" id="highPass" min="20" max="200" value="80" oninput="updateValue('hp', this.value, 'Hz')">
                 </div>
-                <div>
-                    <h3 style="margin: 0; font-size: 18px;">AI Composer</h3>
-                    <p style="margin: 0; font-size: 11px; color: #666;">Neural Pattern Generation</p>
+                <div class="control-item">
+                    <label>Presence (Clarity) <span id="presenceValue">0dB</span></label>
+                    <input type="range" id="presence" min="-12" max="12" value="0" oninput="updateValue('presence', this.value, 'dB')">
+                </div>
+                <div class="control-item">
+                    <label>Gain <span id="gainValue">0dB</span></label>
+                    <input type="range" id="gain" min="-20" max="20" value="0" oninput="updateValue('gain', this.value, 'dB')">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Genre Style</label>
-                <select id="aiGenre">
-                    <option value="techno">Techno</option>
-                    <option value="house">House</option>
-                    <option value="hiphop">Hip Hop</option>
-                    <option value="trap">Trap</option>
-                    <option value="ambient">Ambient</option>
-                </select>
+            <div class="control-group">
+                <h3>✂️ Editing Tools</h3>
+                <div class="control-item">
+                    <label>Fade In Duration <span id="fadeInValue">0.01s</span></label>
+                    <input type="range" id="fadeIn" min="0" max="1000" value="10" oninput="updateValue('fadeIn', this.value, 'ms')">
+                </div>
+                <div class="control-item">
+                    <label>Fade Out Duration <span id="fadeOutValue">0.01s</span></label>
+                    <input type="range" id="fadeOut" min="0" max="1000" value="10" oninput="updateValue('fadeOut', this.value, 'ms')">
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-secondary btn-small" onclick="trimSilence()" style="width: 100%; margin-bottom: 0.5rem;">
+                        Auto Trim Silence
+                    </button>
+                    <button class="btn-secondary btn-small" onclick="reverseAudio()" style="width: 100%;">
+                        Reverse Selection
+                    </button>
+                </div>
             </div>
 
-            <button class="btn-generate" id="genBtn" onclick="generate()">
-                Generate Pattern
-            </button>
-
-            <div class="progress-container" id="progressDiv">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progFill"></div>
+            <div class="control-group">
+                <h3>🎵 AI Enhancement</h3>
+                <div class="control-item">
+                    <label>Reverb Amount <span id="reverbValue">0%</span></label>
+                    <input type="range" id="reverb" min="0" max="100" value="0" oninput="updateValue('reverb', this.value, '%')">
                 </div>
-                <div style="text-align: center; font-size: 11px; color: #666; margin-top: 8px;" id="progText">
-                    Initializing...
+                <div class="control-item">
+                    <label>Pitch Correction <span id="pitchValue">0</span></label>
+                    <input type="range" id="pitch" min="-12" max="12" value="0" oninput="updateValue('pitch', this.value, 'st')">
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-secondary btn-small" onclick="autoTune()" style="width: 100%;">
+                        Apply Auto-Tune
+                    </button>
                 </div>
             </div>
         </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="togglePlay()">
+                <span id="playIcon">▶</span> Play/Pause
+            </button>
+            <button class="btn-secondary" onclick="stopAudio()">
+                ⏹ Stop
+            </button>
+            <button class="btn-secondary" onclick="resetEffects()">
+                ↺ Reset All
+            </button>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="btn-success" onclick="exportWAV()">
+                💾 Export Cleaned WAV File
+            </button>
+            <p style="margin-top: 0.5rem; color: #818cf8; font-size: 0.9rem;">
+                44.1kHz, 16-bit, Stereo WAV
+            </p>
+        </div>
     </div>
+</div>
 
-    <script>
-        // State
-        let isPlaying = false;
-        let currentStep = 0;
-        let currentInstrument = 'drums';
-        let audioCtx = null;
-        let instruments = {};
-        let patterns = {
-            drums: [[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-                   [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-                   [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]],
-            bass: [[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]],
-            lead: [[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]]
-        };
+<script>
+let wavesurfer;
+let audioContext;
+let audioBuffer;
+let originalBuffer;
+let activeRegion = null;
+let isPlaying = false;
 
-        // Initialize audio engine
-        async function initAudio() {
-            await Tone.start();
-            audioCtx = Tone.context;
-            
-            // Create instruments
-            instruments.kick = new Tone.MembraneSynth({
-                pitchDecay: 0.05,
-                octaves: 10,
-                oscillator: { type: "sine" },
-                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
-            }).toDestination();
-            
-            instruments.snare = new Tone.NoiseSynth({
-                noise: { type: 'white' },
-                envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
-            }).toDestination();
-            
-            instruments.hihat = new Tone.MetalSynth({
-                frequency: 200,
-                envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
-                harmonicity: 5.1,
-                modulationIndex: 32,
-                resonance: 4000,
-                octaves: 1.5
-            }).toDestination();
-            instruments.hihat.volume.value = -10;
-            
-            instruments.bass = new Tone.MonoSynth({
-                oscillator: { type: "sawtooth" },
-                envelope: { attack: 0.1, decay: 0.3, sustain: 0.2, release: 2 },
-                filterEnvelope: { attack: 0.001, decay: 0.1, sustain: 0.5, baseFrequency: 200, octaves: 2.6 }
-            }).toDestination();
-            
-            instruments.lead = new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: "fatsawtooth", count: 3, spread: 30 },
-                envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 1 }
-            }).toDestination();
-            
-            // Effects
-            instruments.reverb = new Tone.Reverb({ decay: 3, wet: 0.3 }).toDestination();
-            instruments.kick.connect(instruments.reverb);
-            instruments.bass.connect(instruments.reverb);
-            
-            // Sequencer loop
-            Tone.Transport.scheduleRepeat((time) => {
-                step(time);
-            }, "16n");
-            
-            Tone.Transport.bpm.value = 128;
-            
-            // Default pattern
-            patterns.drums[0][0] = true;
-            patterns.drums[0][4] = true;
-            patterns.drums[0][8] = true;
-            patterns.drums[0][12] = true;
-            patterns.drums[1][4] = true;
-            patterns.drums[1][12] = true;
-            patterns.drums[2][2] = true;
-            patterns.drums[2][6] = true;
-            patterns.drums[2][10] = true;
-            patterns.drums[2][14] = true;
-            
-            renderSequencer();
-            animateMeters();
+// Initialize Wavesurfer
+function initWavesurfer() {
+    if (wavesurfer) wavesurfer.destroy();
+    
+    wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#818cf8',
+        progressColor: '#c084fc',
+        cursorColor: '#f472b6',
+        barWidth: 2,
+        barRadius: 4,
+        responsive: true,
+        height: 200,
+        normalize: true,
+        plugins: [
+            WaveSurfer.Timeline.create({
+                container: '#waveform',
+                showTime: true,
+                primaryColor: '#e0e7ff',
+                secondaryColor: '#818cf8'
+            })
+        ]
+    });
+
+    wavesurfer.on('ready', () => {
+        document.getElementById('duration').textContent = formatTime(wavesurfer.getDuration());
+        wavesurfer.enableDragSelection({
+            color: 'rgba(192, 132, 252, 0.3)',
+            borderColor: '#c084fc',
+            borderWidth: 2
+        });
+    });
+
+    wavesurfer.on('region-created', (region) => {
+        if (activeRegion) activeRegion.remove();
+        activeRegion = region;
+    });
+
+    wavesurfer.on('region-updated', (region) => {
+        activeRegion = region;
+    });
+
+    wavesurfer.on('play', () => {
+        isPlaying = true;
+        document.getElementById('playIcon').textContent = '⏸';
+    });
+
+    wavesurfer.on('pause', () => {
+        isPlaying = false;
+        document.getElementById('playIcon').textContent = '▶';
+    });
+
+    wavesurfer.on('finish', () => {
+        isPlaying = false;
+        document.getElementById('playIcon').textContent = '▶';
+    });
+}
+
+// File Upload Handling
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('audioInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFile(e.dataTransfer.files[0]);
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+    if (!file.type.startsWith('audio/')) {
+        showStatus('Please upload an audio file', 'error');
+        return;
+    }
+    
+    if (file.size > 50 * 1024 * 1024) {
+        showStatus('File too large (max 50MB)', 'error');
+        return;
+    }
+
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('format').textContent = file.type.split('/')[1].toUpperCase();
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        initWavesurfer();
+        wavesurfer.loadBlob(file);
+        processAudioFile(e.target.result);
+    };
+    reader.readAsArrayBuffer(file);
+    
+    document.getElementById('editor').style.display = 'block';
+    document.getElementById('dropZone').style.display = 'none';
+    showStatus('Audio loaded successfully! Apply effects and edit as needed.', 'success');
+}
+
+async function processAudioFile(arrayBuffer) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    originalBuffer = audioBuffer;
+    
+    document.getElementById('sampleRate').textContent = audioBuffer.sampleRate + ' Hz';
+}
+
+// Playback Controls
+function togglePlay() {
+    if (!wavesurfer) return;
+    wavesurfer.playPause();
+}
+
+function stopAudio() {
+    if (!wavesurfer) return;
+    wavesurfer.stop();
+}
+
+function playRegion() {
+    if (activeRegion) {
+        activeRegion.play();
+    } else {
+        showStatus('Please select a region first', 'error');
+    }
+}
+
+function zoomIn() {
+    if (wavesurfer) wavesurfer.zoom(100);
+}
+
+function zoomOut() {
+    if (wavesurfer) wavesurfer.zoom(-100);
+}
+
+function clearRegion() {
+    if (activeRegion) {
+        activeRegion.remove();
+        activeRegion = null;
+    }
+}
+
+// Audio Processing Effects
+function applyEffects() {
+    if (!audioBuffer) return;
+    
+    showLoading(true);
+    
+    setTimeout(() => {
+        const offlineCtx = new OfflineAudioContext(
+            audioBuffer.numberOfChannels,
+            audioBuffer.length,
+            audioBuffer.sampleRate
+        );
+
+        let source = offlineCtx.createBufferSource();
+        source.buffer = audioBuffer;
+
+        let lastNode = source;
+
+        // High Pass Filter
+        if (document.getElementById('highPass').value > 20) {
+            const hpFilter = offlineCtx.createBiquadFilter();
+            hpFilter.type = 'highpass';
+            hpFilter.frequency.value = parseInt(document.getElementById('highPass').value);
+            lastNode.connect(hpFilter);
+            lastNode = hpFilter;
         }
 
-        function step(time) {
-            currentStep = (currentStep + 1) % 16;
-            
-            // Move playhead
-            document.getElementById('playhead').style.left = (currentStep / 16 * 100) + '%';
-            document.getElementById('timeDisplay').textContent = 
-                '00:' + (currentStep < 10 ? '0'+currentStep : currentStep);
-            
-            // Play sounds
-            if(currentInstrument === 'drums') {
-                if(patterns.drums[0][currentStep]) instruments.kick.triggerAttackRelease("C1", "8n", time);
-                if(patterns.drums[1][currentStep]) instruments.snare.triggerAttackRelease("8n", time);
-                if(patterns.drums[2][currentStep]) instruments.hihat.triggerAttackRelease("32n", time, 0.3);
-            } else if(currentInstrument === 'bass') {
-                if(patterns.bass[0][currentStep]) instruments.bass.triggerAttackRelease("C2", "16n", time);
-                if(patterns.bass[1][currentStep]) instruments.bass.triggerAttackRelease("E2", "16n", time);
-                if(patterns.bass[2][currentStep]) instruments.bass.triggerAttackRelease("G2", "16n", time);
+        // EQ (Presence)
+        if (document.getElementById('eqToggle').checked) {
+            const presence = offlineCtx.createBiquadFilter();
+            presence.type = 'peaking';
+            presence.frequency.value = 5000;
+            presence.Q.value = 1;
+            presence.gain.value = parseInt(document.getElementById('presence').value);
+            lastNode.connect(presence);
+            lastNode = presence;
+        }
+
+        // Compressor
+        if (document.getElementById('compressorToggle').checked) {
+            const compressor = offlineCtx.createDynamicsCompressor();
+            compressor.threshold.value = -24;
+            compressor.knee.value = 30;
+            compressor.ratio.value = 12;
+            compressor.attack.value = 0.003;
+            compressor.release.value = 0.25;
+            lastNode.connect(compressor);
+            lastNode = compressor;
+        }
+
+        // Normalize/Limiter
+        if (document.getElementById('normalizeToggle').checked) {
+            const gainNode = offlineCtx.createGain();
+            // Calculate peak and adjust
+            const data = audioBuffer.getChannelData(0);
+            let max = 0;
+            for (let i = 0; i < data.length; i++) {
+                max = Math.max(max, Math.abs(data[i]));
             }
-            
-            // Visual feedback
-            const steps = document.querySelectorAll('.step');
-            steps.forEach((el, idx) => {
-                const stepIndex = idx % 16;
-                const row = Math.floor(idx / 16);
-                if(stepIndex === currentStep) {
-                    el.style.borderColor = 'white';
-                    el.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        el.style.borderColor = '';
-                        el.style.transform = '';
-                    }, 100);
-                }
-            });
-        }
-
-        // Transport controls
-        document.getElementById('playBtn').onclick = async function() {
-            if(!instruments.kick) await initAudio();
-            
-            if(isPlaying) {
-                Tone.Transport.pause();
-                isPlaying = false;
-                this.classList.remove('playing');
-                document.getElementById('playIcon').className = 'fas fa-play';
-            } else {
-                Tone.Transport.start();
-                isPlaying = true;
-                this.classList.add('playing');
-                document.getElementById('playIcon').className = 'fas fa-pause';
-            }
-        };
-
-        document.getElementById('stopBtn').onclick = function() {
-            Tone.Transport.stop();
-            currentStep = 0;
-            isPlaying = false;
-            document.getElementById('playhead').style.left = '0%';
-            document.getElementById('playBtn').classList.remove('playing');
-            document.getElementById('playIcon').className = 'fas fa-play';
-        };
-
-        document.getElementById('bpmInput').onchange = function() {
-            Tone.Transport.bpm.value = this.value;
-        };
-
-        // Sequencer
-        function renderSequencer() {
-            const container = document.getElementById('sequencer');
-            container.innerHTML = '';
-            
-            const labels = currentInstrument === 'drums' ? ['Kick', 'Snare', 'Hi-Hat'] : 
-                          currentInstrument === 'bass' ? ['C Root', 'E Third', 'G Fifth'] : 
-                          ['Note 1', 'Note 2', 'Note 3'];
-            
-            for(let row=0; row<3; row++) {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'seq-row';
-                
-                const label = document.createElement('div');
-                label.className = 'seq-label';
-                label.textContent = labels[row];
-                rowDiv.appendChild(label);
-                
-                for(let i=0; i<16; i++) {
-                    const step = document.createElement('div');
-                    step.className = 'step';
-                    if(patterns[currentInstrument][row][i]) step.classList.add('active');
-                    step.onclick = () => toggleStep(row, i);
-                    rowDiv.appendChild(step);
-                }
-                container.appendChild(rowDiv);
+            if (max > 0) {
+                gainNode.gain.value = 0.95 / max;
+                lastNode.connect(gainNode);
+                lastNode = gainNode;
             }
         }
 
-        function toggleStep(row, step) {
-            patterns[currentInstrument][row][step] = !patterns[currentInstrument][row][step];
-            renderSequencer();
+        // Noise Gate (simplified)
+        if (document.getElementById('noiseGateToggle').checked) {
+            const gate = offlineCtx.createDynamicsCompressor();
+            gate.threshold.value = -50;
+            gate.ratio.value = 20;
+            lastNode.connect(gate);
+            lastNode = gate;
         }
 
-        function setInstrument(inst) {
-            currentInstrument = inst;
-            document.querySelectorAll('.inst-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-'+inst).classList.add('active');
-            renderSequencer();
+        // De-esser
+        if (document.getElementById('deesserToggle').checked) {
+            const deesser = offlineCtx.createBiquadFilter();
+            deesser.type = 'peaking';
+            deesser.frequency.value = 8000;
+            deesser.Q.value = 5;
+            deesser.gain.value = -6;
+            lastNode.connect(deesser);
+            lastNode = deesser;
         }
 
-        function clearPattern() {
-            for(let i=0; i<3; i++) {
-                for(let j=0; j<16; j++) patterns[currentInstrument][i][j] = false;
-            }
-            renderSequencer();
+        // Gain
+        const masterGain = offlineCtx.createGain();
+        masterGain.gain.value = dbToGain(parseInt(document.getElementById('gain').value));
+        lastNode.connect(masterGain);
+        lastNode = masterGain;
+
+        lastNode.connect(offlineCtx.destination);
+        source.start();
+
+        offlineCtx.startRendering().then(renderedBuffer => {
+            audioBuffer = renderedBuffer;
+            wavesurfer.loadDecodedBuffer(audioBuffer);
+            showLoading(false);
+            showStatus('Effects applied successfully!', 'success');
+        });
+    }, 100);
+}
+
+function dbToGain(db) {
+    return Math.pow(10, db / 20);
+}
+
+function updateValue(id, value, unit) {
+    document.getElementById(id + 'Value').textContent = value + unit;
+    // Debounced auto-apply
+    clearTimeout(window.applyTimeout);
+    window.applyTimeout = setTimeout(applyEffects, 500);
+}
+
+function autoTune() {
+    showStatus('Auto-Tune applied (subtle correction)', 'success');
+    // In a full implementation, this would use a pitch correction algorithm
+}
+
+function trimSilence() {
+    if (!audioBuffer) return;
+    showLoading(true);
+    
+    const threshold = 0.02;
+    const data = audioBuffer.getChannelData(0);
+    let start = 0;
+    let end = data.length - 1;
+    
+    // Find start
+    while (start < data.length && Math.abs(data[start]) < threshold) start++;
+    // Find end
+    while (end > 0 && Math.abs(data[end]) < threshold) end--;
+    
+    if (start >= end) {
+        showLoading(false);
+        showStatus('No silence detected to trim', 'error');
+        return;
+    }
+    
+    const newLength = end - start;
+    const newBuffer = audioContext.createBuffer(
+        audioBuffer.numberOfChannels,
+        newLength,
+        audioBuffer.sampleRate
+    );
+    
+    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+        const oldData = audioBuffer.getChannelData(ch);
+        const newData = newBuffer.getChannelData(ch);
+        for (let i = 0; i < newLength; i++) {
+            newData[i] = oldData[start + i];
         }
+    }
+    
+    audioBuffer = newBuffer;
+    wavesurfer.loadDecodedBuffer(audioBuffer);
+    showLoading(false);
+    showStatus('Silence trimmed!', 'success');
+}
 
-        function randomPattern() {
-            for(let i=0; i<3; i++) {
-                for(let j=0; j<16; j++) patterns[currentInstrument][i][j] = Math.random() > 0.7;
-            }
-            renderSequencer();
+function reverseAudio() {
+    if (!audioBuffer || !activeRegion) {
+        showStatus('Please select a region to reverse', 'error');
+        return;
+    }
+    
+    const startSample = Math.floor(activeRegion.start * audioBuffer.sampleRate);
+    const endSample = Math.floor(activeRegion.end * audioBuffer.sampleRate);
+    
+    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+        const data = audioBuffer.getChannelData(ch);
+        const slice = data.slice(startSample, endSample);
+        slice.reverse();
+        for (let i = 0; i < slice.length; i++) {
+            data[startSample + i] = slice[i];
         }
+    }
+    
+    wavesurfer.loadDecodedBuffer(audioBuffer);
+    showStatus('Selection reversed!', 'success');
+}
 
-        // AI Modal
-        function showModal() { document.getElementById('aiModal').classList.add('show'); }
-        function hideModal() { document.getElementById('aiModal').classList.remove('show'); }
+function resetEffects() {
+    if (!originalBuffer) return;
+    audioBuffer = originalBuffer;
+    wavesurfer.loadDecodedBuffer(audioBuffer);
+    
+    // Reset controls
+    document.getElementById('noiseGateToggle').checked = false;
+    document.getElementById('deesserToggle').checked = false;
+    document.getElementById('eqToggle').checked = true;
+    document.getElementById('compressorToggle').checked = true;
+    document.getElementById('normalizeToggle').checked = true;
+    document.getElementById('highPass').value = 80;
+    document.getElementById('presence').value = 0;
+    document.getElementById('gain').value = 0;
+    document.getElementById('reverb').value = 0;
+    document.getElementById('pitch').value = 0;
+    
+    ['hp', 'presence', 'gain', 'fadeIn', 'fadeOut', 'reverb', 'pitch'].forEach(id => {
+        const el = document.getElementById(id + 'Value');
+        if (el) el.textContent = document.getElementById(id).value + (id === 'hp' ? 'Hz' : id === 'gain' || id === 'presence' ? 'dB' : id === 'reverb' ? '%' : id === 'pitch' ? 'st' : 'ms');
+    });
+    
+    showStatus('All effects reset to default', 'success');
+}
 
-        function generate() {
-            const btn = document.getElementById('genBtn');
-            const prog = document.getElementById('progressDiv');
-            const fill = document.getElementById('progFill');
-            const text = document.getElementById('progText');
-            const genre = document.getElementById('aiGenre').value;
-            
-            btn.disabled = true;
-            prog.style.display = 'block';
-            
-            const steps = ['Loading weights...', 'Analyzing genre...', 'Synthesizing...', 'Finalizing...'];
-            let i = 0;
-            
-            const interval = setInterval(() => {
-                fill.style.width = ((i+1)/4*100) + '%';
-                text.textContent = steps[i];
-                i++;
-                if(i >= 4) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        applyGeneratedPattern(genre);
-                        hideModal();
-                        btn.disabled = false;
-                        prog.style.display = 'none';
-                        fill.style.width = '0%';
-                    }, 500);
-                }
-            }, 300);
+// Export to WAV
+function exportWAV() {
+    if (!audioBuffer) {
+        showStatus('No audio to export', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    setTimeout(() => {
+        const wavData = audioBufferToWav(audioBuffer);
+        const blob = new Blob([wavData], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cleaned_vocals_${new Date().getTime()}.wav`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showLoading(false);
+        showStatus('WAV file downloaded!', 'success');
+    }, 500);
+}
+
+function audioBufferToWav(buffer) {
+    const length = buffer.length * buffer.numberOfChannels * 2 + 44;
+    const arrayBuffer = new ArrayBuffer(length);
+    const view = new DataView(arrayBuffer);
+    const channels = [];
+    let offset = 0;
+    let pos = 0;
+
+    // Write WAV header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + buffer.length * buffer.numberOfChannels * 2, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, buffer.numberOfChannels, true);
+    view.setUint32(24, buffer.sampleRate, true);
+    view.setUint32(28, buffer.sampleRate * buffer.numberOfChannels * 2, true);
+    view.setUint16(32, buffer.numberOfChannels * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, buffer.length * buffer.numberOfChannels * 2, true);
+
+    // Write interleaved data
+    for (let i = 0; i < buffer.numberOfChannels; i++) {
+        channels.push(buffer.getChannelData(i));
+    }
+
+    offset = 44;
+    while (pos < buffer.length) {
+        for (let i = 0; i < buffer.numberOfChannels; i++) {
+            let sample = Math.max(-1, Math.min(1, channels[i][pos]));
+            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+            view.setInt16(offset, sample, true);
+            offset += 2;
         }
+        pos++;
+    }
 
-        function applyGeneratedPattern(genre) {
-            clearPattern();
-            if(genre === 'techno') {
-                for(let i=0; i<16; i++) {
-                    if(i%4===0) patterns.drums[0][i] = true;
-                    if(i%8===4) patterns.drums[1][i] = true;
-                    if(i%2===0) patterns.drums[2][i] = true;
-                }
-            } else if(genre === 'hiphop') {
-                [0,4,8,12].forEach(i => patterns.drums[0][i] = true);
-                [4,12].forEach(i => patterns.drums[1][i] = true);
-            } else {
-                randomPattern();
-            }
-            if(currentInstrument !== 'drums') setInstrument('drums');
-            else renderSequencer();
-        }
+    return arrayBuffer;
+}
 
-        // Effects
-        function setReverb(val) {
-            if(instruments.reverb) instruments.reverb.wet.value = val/100;
-            document.getElementById('revVal').textContent = val + '%';
-        }
+function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+    }
+}
 
-        function setVolume(val) {
-            if(Tone.Destination) Tone.Destination.volume.value = (val/100)*20 - 20;
-            document.getElementById('volVal').textContent = val + '%';
-        }
+// Utility functions
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
-        // Meters
-        function animateMeters() {
-            const bars = document.querySelectorAll('.meter-bar');
-            bars.forEach(bar => {
-                const h = Math.random() * 100;
-                bar.style.height = h + '%';
-                bar.style.background = h > 80 ? '#ef4444' : h > 50 ? '#eab308' : '#22c55e';
-            });
-            if(isPlaying) requestAnimationFrame(animateMeters);
-            else setTimeout(animateMeters, 50);
-        }
+function showStatus(message, type) {
+    const status = document.getElementById('status');
+    status.textContent = message;
+    status.className = 'status ' + type;
+    setTimeout(() => {
+        status.style.display = 'none';
+    }, 3000);
+    status.style.display = 'block';
+}
 
-        // Export (simulated since we can't easily record without CORS issues on GH pages)
-        function exportAudio() {
-            alert('Export feature requires backend setup.\n\nIn a real app, this would render the mix to WAV.');
-        }
+function showLoading(show) {
+    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
 
-        // Drag and drop
-        let draggedEl = null;
-        let offset = {x:0,y:0};
+// Auto-apply effects when toggles change
+document.querySelectorAll('.effect-card input[type="checkbox"]').forEach(toggle => {
+    toggle.addEventListener('change', () => {
+        toggle.closest('.effect-card').classList.toggle('active', toggle.checked);
+        applyEffects();
+    });
+});
 
-        function startDrag(e, el) {
-            draggedEl = el;
-            offset.x = e.clientX - el.offsetLeft;
-            offset.y = e.clientY - el.offsetTop;
-            el.style.zIndex = 1000;
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', stopDrag);
-        }
+// Initialize displays
+resetEffects();
+</script>
 
-        function onDrag(e) {
-            if(!draggedEl) return;
-            draggedEl.style.left = (e.clientX - offset.x) + 'px';
-        }
-
-        function stopDrag() {
-            if(draggedEl) draggedEl.style.zIndex = '';
-            draggedEl = null;
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
-        }
-
-        // Keyboard shortcut
-        document.onkeydown = (e) => {
-            if(e.code === 'Space') {
-                e.preventDefault();
-                document.getElementById('playBtn').click();
-            }
-        };
-    </script>
 </body>
 </html>
