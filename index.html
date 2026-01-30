@@ -3,877 +3,529 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Music Studio - Fully Functional DAW</title>
+    <title>AI Music Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script 
-src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <script 
-src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import 
-url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #0a0a0a; 
-color: #e5e5e5; overflow: hidden; }
-        .grid-bg { background-image: linear-gradient(to right, #1a1a1a 
-1px, transparent 1px); background-size: 40px 100%; }
-        .sequencer-grid { display: grid; grid-template-columns: repeat(16, 
-1fr); gap: 4px; }
-        .step-btn { aspect-ratio: 1; background: rgba(255,255,255,0.1); 
-border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: 
-pointer; transition: all 0.1s; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; overflow: hidden; margin: 0; }
+        .step-btn { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.1s; }
         .step-btn:hover { background: rgba(255,255,255,0.2); }
-        .step-btn.active { background: #00d4ff; box-shadow: 0 0 10px 
-rgba(0,212,255,0.5); }
-        .step-btn.playing { transform: scale(1.2); border-color: white; }
-        .step-btn.accent { background: #b24bf3; }
-        .piano-key { height: 120px; border: 1px solid #333; background: 
-#1a1a1a; cursor: pointer; position: relative; }
-        .piano-key.black { height: 80px; background: #000; margin-left: 
--15px; margin-right: -15px; z-index: 10; width: 30px; }
-        .piano-key:active, .piano-key.active { background: #00d4ff 
-!important; }
+        .step-btn.active { background: #00d4ff; box-shadow: 0 0 10px rgba(0,212,255,0.5); }
+        .step-btn.playing { transform: scale(1.1); border-color: white; }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; }
+        .clip { position: absolute; height: 80%; background: linear-gradient(135deg, #00d4ff, #b24bf3); border-radius: 4px; cursor: move; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 50; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
         .meter-bar { transition: height 0.05s ease; }
-        .visualizer { width: 100%; height: 60px; background: 
-rgba(0,0,0,0.5); border-radius: 8px; }
-        .dragging { cursor: grabbing !important; }
-        .clip { position: absolute; height: 80%; background: 
-linear-gradient(135deg, #00d4ff, #b24bf3); border-radius: 4px; cursor: 
-move; opacity: 0.9; display: flex; align-items: center; padding: 0 8px; 
-font-size: 11px; font-weight: 500; overflow: hidden; box-shadow: 0 2px 8px 
-rgba(0,0,0,0.5); }
-        .clip:hover { opacity: 1; transform: translateY(-1px); }
-        .modal { backdrop-filter: blur(10px); background: rgba(0,0,0,0.8); 
-}
-        input[type="range"] { -webkit-appearance: none; background: 
-transparent; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: 
-none; height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; 
-cursor: pointer; margin-top: -4px; }
-        input[type="range"]::-webkit-slider-runnable-track { width: 100%; 
-height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
     </style>
 </head>
-<body class="h-screen flex flex-col select-none">
+<body style="height: 100vh; display: flex; flex-direction: column;">
 
     <!-- Header -->
-    <header class="h-14 bg-[#111] border-b border-white/10 flex 
-items-center justify-between px-4 shrink-0 z-50">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-gradient-to-br from-purple-600 
-to-cyan-500 rounded-lg flex items-center justify-center">
-                <i class="fas fa-music text-white text-sm"></i>
+    <header style="height: 56px; background: #111; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #9333ea, #06b6d4); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
             </div>
             <div>
-                <h1 class="font-bold text-sm tracking-tight">StudioAI</h1>
-                <p class="text-[10px] text-gray-500">v2.0.1 // Web Audio 
-API</p>
+                <h1 style="margin: 0; font-size: 14px; font-weight: bold;">StudioAI</h1>
+                <p style="margin: 0; font-size: 10px; color: #666;">Web Audio DAW</p>
             </div>
         </div>
 
-        <!-- Transport -->
-        <div class="flex items-center gap-3 bg-[#1a1a1a] px-4 py-1.5 
-rounded-lg border border-white/5">
-            <button id="stopBtn" class="text-gray-400 hover:text-white 
-transition p-1.5" title="Stop [Space]">
+        <div style="display: flex; align-items: center; gap: 12px; background: #1a1a1a; padding: 4px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <button id="stopBtn" style="background: none; border: none; color: #999; cursor: pointer; padding: 8px;">
                 <i class="fas fa-square"></i>
             </button>
-            <button id="playBtn" class="w-10 h-10 bg-cyan-500 
-hover:bg-cyan-400 text-black rounded-full flex items-center justify-center 
-transition transform active:scale-95 shadow-lg shadow-cyan-500/20" 
-title="Play/Pause [Space]">
-                <i class="fas fa-play ml-0.5" id="playIcon"></i>
+            <button id="playBtn" style="width: 40px; height: 40px; background: #06b6d4; border: none; border-radius: 50%; color: black; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-play" id="playIcon" style="margin-left: 3px;"></i>
             </button>
-            <button id="recordBtn" class="text-gray-400 hover:text-red-500 
-transition p-1.5" title="Record [R]">
-                <i class="fas fa-circle text-red-500 animate-pulse hidden" 
-id="recIndicator"></i>
-                <i class="fas fa-circle" id="recIcon"></i>
-            </button>
-            
-            <div class="w-px h-6 bg-white/10 mx-2"></div>
-            
-            <div class="font-mono text-cyan-400 text-lg tabular-nums w-24 
-text-center" id="timeDisplay">00:00</div>
-            
-            <div class="flex items-center gap-2 ml-2">
-                <span class="text-[10px] text-gray-500 
-uppercase">BPM</span>
-                <input type="number" id="bpmInput" value="128" min="60" 
-max="200" class="w-14 bg-transparent border border-white/10 rounded px-2 
-py-1 text-sm font-mono text-center focus:border-cyan-500 outline-none">
+            <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
+            <span id="timeDisplay" style="font-family: monospace; color: #06b6d4; font-size: 18px; min-width: 60px; text-align: center;">00:00</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 10px; color: #666; text-transform: uppercase;">BPM</span>
+                <input type="number" id="bpmInput" value="128" min="60" max="200" style="width: 50px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 4px; border-radius: 4px; text-align: center; font-size: 12px;">
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
-            <button onclick="exportWAV()" class="px-3 py-1.5 bg-white/5 
-hover:bg-white/10 border border-white/10 rounded text-xs font-medium 
-transition flex items-center gap-2">
+        <div style="display: flex; gap: 8px;">
+            <button onclick="exportWAV()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
                 <i class="fas fa-download"></i> Export
             </button>
-            <button onclick="showAIModal()" class="px-3 py-1.5 
-bg-purple-600 hover:bg-purple-700 rounded text-xs font-medium transition 
-flex items-center gap-2 shadow-lg shadow-purple-600/20">
+            <button onclick="openModal()" style="background: #9333ea; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                 <i class="fas fa-wand-magic-sparkles"></i> Generate
             </button>
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <div class="flex-1 flex overflow-hidden">
+    <!-- Main Content -->
+    <div style="flex: 1; display: flex; overflow: hidden;">
         
-        <!-- Left Sidebar: Instruments -->
-        <aside class="w-64 bg-[#111] border-r border-white/10 flex 
-flex-col shrink-0">
-            <div class="p-3 border-b border-white/10">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase 
-tracking-wider mb-2">Instruments</h3>
-                <div class="space-y-1">
-                    <button onclick="setInstrument('synth')" 
-class="instr-btn w-full text-left px-3 py-2 rounded bg-cyan-500/20 border 
-border-cyan-500/30 text-cyan-400 text-xs font-medium flex items-center 
-gap-2" data-instr="synth">
-                        <i class="fas fa-wave-square"></i> Lead Synth
-                    </button>
-                    <button onclick="setInstrument('bass')" 
-class="instr-btn w-full text-left px-3 py-2 rounded hover:bg-white/5 
-text-gray-300 text-xs font-medium flex items-center gap-2 transition" 
-data-instr="bass">
-                        <i class="fas fa-guitar"></i> Bass
-                    </button>
-                    <button onclick="setInstrument('drums')" 
-class="instr-btn w-full text-left px-3 py-2 rounded hover:bg-white/5 
-text-gray-300 text-xs font-medium flex items-center gap-2 transition" 
-data-instr="drums">
-                        <i class="fas fa-drum"></i> Drum Machine
-                    </button>
-                    <button onclick="setInstrument('pad')" 
-class="instr-btn w-full text-left px-3 py-2 rounded hover:bg-white/5 
-text-gray-300 text-xs font-medium flex items-center gap-2 transition" 
-data-instr="pad">
-                        <i class="fas fa-cloud"></i> Ambient Pad
-                    </button>
-                </div>
+        <!-- Sidebar -->
+        <aside style="width: 250px; background: #111; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; padding: 16px; gap: 16px; overflow-y: auto;">
+            <div>
+                <h3 style="font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em;">Instruments</h3>
+                <button onclick="setInst('drums')" id="btn-drums" style="width: 100%; text-align: left; padding: 10px; background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.3); color: #06b6d4; border-radius: 6px; margin-bottom: 6px; cursor: pointer; font-size: 13px;">
+                    <i class="fas fa-drum" style="margin-right: 8px;"></i> Drum Machine
+                </button>
+                <button onclick="setInst('bass')" id="btn-bass" style="width: 100%; text-align: left; padding: 10px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #999; border-radius: 6px; margin-bottom: 6px; cursor: pointer; font-size: 13px;">
+                    <i class="fas fa-guitar" style="margin-right: 8px;"></i> Bass Synth
+                </button>
+                <button onclick="setInst('lead')" id="btn-lead" style="width: 100%; text-align: left; padding: 10px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #999; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                    <i class="fas fa-wave-square" style="margin-right: 8px;"></i> Lead Synth
+                </button>
             </div>
 
-            <div class="p-3 flex-1 overflow-y-auto">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase 
-tracking-wider mb-3">Effects</h3>
-                
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between text-[10px] 
-text-gray-500 mb-1">
-                            <span>Reverb</span>
-                            <span id="reverbVal">30%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="30" 
-class="w-full" oninput="updateEffect('reverb', this.value)">
+            <div>
+                <h3 style="font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em;">Effects</h3>
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
+                        <span>Reverb</span>
+                        <span>30%</span>
                     </div>
-                    
-                    <div>
-                        <div class="flex justify-between text-[10px] 
-text-gray-500 mb-1">
-                            <span>Delay</span>
-                            <span id="delayVal">15%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="15" 
-class="w-full" oninput="updateEffect('delay', this.value)">
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-[10px] 
-text-gray-500 mb-1">
-                            <span>Filter Cutoff</span>
-                            <span id="filterVal">80%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="80" 
-class="w-full" oninput="updateEffect('filter', this.value)">
-                    </div>
+                    <input type="range" min="0" max="100" value="30" oninput="if(window.instruments && instruments.reverb) instruments.reverb.wet.value = this.value/100">
                 </div>
-
-                <div class="mt-6 p-3 rounded bg-[#1a1a1a] border 
-border-white/5">
-                    <div class="text-[10px] text-gray-500 mb-2">Master 
-Output</div>
-                    <div class="flex gap-1 h-16 items-end" 
-id="masterMeter">
-                        <div class="flex-1 bg-green-500/20 rounded-t 
-meter-bar" style="height: 20%"></div>
-                        <div class="flex-1 bg-green-500/20 rounded-t 
-meter-bar" style="height: 35%"></div>
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
+                        <span>Master Vol</span>
                     </div>
+                    <input type="range" min="0" max="100" value="80" oninput="if(Tone && Tone.Destination) Tone.Destination.volume.value = (this.value/100)*20 - 20">
                 </div>
-            </div>
-
-            <!-- Virtual Piano -->
-            <div class="h-32 border-t border-white/10 relative 
-overflow-hidden hidden" id="pianoRoll">
-                <div class="absolute inset-0 flex justify-center items-end 
-pb-2 px-2 gap-0.5" id="pianoKeys">
-                    <!-- Generated by JS -->
+                <div style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-top: 16px;">
+                    <div style="font-size: 10px; color: #666; margin-bottom: 8px;">Master Meter</div>
+                    <div style="display: flex; gap: 4px; height: 60px; align-items: end;" id="meters">
+                        <div class="meter-bar" style="flex: 1; background: #22c55e; height: 20%; border-radius: 2px;"></div>
+                        <div class="meter-bar" style="flex: 1; background: #22c55e; height: 35%; border-radius: 2px;"></div>
+                    </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Center: Timeline & Sequencer -->
-        <main class="flex-1 flex flex-col bg-[#0a0a0a] relative">
+        <!-- Center -->
+        <main style="flex: 1; display: flex; flex-direction: column; background: #0a0a0a;">
             
-            <!-- Timeline Ruler -->
-            <div class="h-8 bg-[#151515] border-b border-white/10 flex 
-items-end relative select-none">
-                <div class="absolute inset-0 flex" id="timeRuler">
-                    ${Array.from({length: 32}, (_, i) => `
-                        <div class="flex-1 border-r border-white/10 
-relative">
-                            <span class="absolute bottom-0 left-1 
-text-[9px] text-gray-600">${i % 4 === 0 ? (i/4 + 1) : ''}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div id="playhead" class="absolute top-0 bottom-0 w-0.5 
-bg-cyan-400 z-20 pointer-events-none" style="left: 0%">
-                    <div class="w-3 h-3 bg-cyan-400 transform 
--translate-x-1/2 rotate-45 absolute -top-1.5"></div>
+            <!-- Timeline -->
+            <div style="height: 32px; background: #151515; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative;">
+                <div id="playhead" style="position: absolute; top: 0; bottom: 0; width: 2px; background: #06b6d4; left: 0%; pointer-events: none; z-index: 20;">
+                    <div style="width: 10px; height: 10px; background: #06b6d4; transform: translateX(-50%) rotate(45deg); position: absolute; top: -5px; left: 50%;"></div>
                 </div>
             </div>
 
-            <!-- Tracks Area -->
-            <div class="flex-1 overflow-y-auto overflow-x-hidden relative" 
-id="trackArea">
-                <div class="min-h-full relative grid-bg" style="width: 
-200%">
+            <!-- Tracks -->
+            <div style="flex: 1; overflow-y: auto; padding: 16px;">
+                <div style="background-image: linear-gradient(to right, #1a1a1a 1px, transparent 1px); background-size: 40px 100%;">
                     
-                    <!-- Track 1: Drums -->
-                    <div class="h-24 border-b border-white/5 relative 
-group">
-                        <div class="absolute left-0 top-0 bottom-0 w-32 
-bg-[#111] border-r border-white/10 p-2 z-10">
-                            <div class="flex items-center gap-2 mb-1">
-                                <button class="w-5 h-5 rounded 
-bg-red-500/20 text-red-400 text-[10px]" onclick="toggleMute(0)">M</button>
-                                <span class="text-xs font-medium 
-truncate">Drums</span>
+                    <!-- Track 1 -->
+                    <div style="height: 80px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; position: relative;">
+                        <div style="position: absolute; left: 0; width: 120px; height: 100%; background: #111; border-right: 1px solid rgba(255,255,255,0.1); padding: 8px;">
+                            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+                                <button style="width: 20px; height: 20px; background: rgba(239,68,68,0.2); color: #ef4444; border: none; border-radius: 4px; font-size: 10px; cursor: pointer;">M</button>
+                                <span style="font-size: 12px; color: #ccc;">Drums</span>
                             </div>
-                            <input type="range" class="w-full mt-2" 
-min="0" max="100" value="80" oninput="setTrackVolume(0, this.value)">
                         </div>
-                        <div class="ml-32 h-full relative p-2" 
-id="track-0">
-                            <div class="absolute top-2 left-8 w-32 h-16 
-bg-gradient-to-r from-orange-500 to-red-500 rounded flex items-center px-2 
-text-xs font-medium cursor-move" onmousedown="startDrag(event, this)">
-                                <i class="fas fa-drum mr-2"></i> Drum Loop 
-A
+                        <div style="margin-left: 120px; height: 100%; position: relative;" id="track-drums">
+                            <div class="clip" style="left: 10px; width: 160px;" onmousedown="startDrag(event, this)">
+                                <i class="fas fa-drum" style="margin-right: 6px;"></i> Pattern A
                             </div>
                         </div>
                     </div>
 
-                    <!-- Track 2: Bass -->
-                    <div class="h-24 border-b border-white/5 relative">
-                        <div class="absolute left-0 top-0 bottom-0 w-32 
-bg-[#111] border-r border-white/10 p-2 z-10">
-                            <div class="flex items-center gap-2 mb-1">
-                                <button class="w-5 h-5 rounded 
-bg-red-500/20 text-red-400 text-[10px]" onclick="toggleMute(1)">M</button>
-                                <span class="text-xs font-medium 
-truncate">Bass</span>
+                    <!-- Track 2 -->
+                    <div style="height: 80px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative;">
+                        <div style="position: absolute; left: 0; width: 120px; height: 100%; background: #111; border-right: 1px solid rgba(255,255,255,0.1); padding: 8px;">
+                            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+                                <button style="width: 20px; height: 20px; background: rgba(239,68,68,0.2); color: #ef4444; border: none; border-radius: 4px; font-size: 10px; cursor: pointer;">M</button>
+                                <span style="font-size: 12px; color: #ccc;">Bass</span>
                             </div>
-                            <input type="range" class="w-full mt-2" 
-min="0" max="100" value="70" oninput="setTrackVolume(1, this.value)">
                         </div>
-                        <div class="ml-32 h-full relative p-2" 
-id="track-1"></div>
+                        <div style="margin-left: 120px; height: 100%; position: relative;" id="track-bass"></div>
                     </div>
-
-                    <!-- Track 3: Lead -->
-                    <div class="h-24 border-b border-white/5 relative">
-                        <div class="absolute left-0 top-0 bottom-0 w-32 
-bg-[#111] border-r border-white/10 p-2 z-10">
-                            <div class="flex items-center gap-2 mb-1">
-                                <button class="w-5 h-5 rounded 
-bg-red-500/20 text-red-400 text-[10px]" onclick="toggleMute(2)">M</button>
-                                <span class="text-xs font-medium 
-truncate">Lead Synth</span>
-                            </div>
-                            <input type="range" class="w-full mt-2" 
-min="0" max="100" value="75" oninput="setTrackVolume(2, this.value)">
-                        </div>
-                        <div class="ml-32 h-full relative p-2" 
-id="track-2"></div>
-                    </div>
-
                 </div>
             </div>
 
-            <!-- Bottom: Pattern Sequencer -->
-            <div class="h-48 bg-[#111] border-t border-white/10 flex 
-flex-col shrink-0">
-                <div class="flex items-center justify-between px-4 py-2 
-border-b border-white/10">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-gray-300">Step 
-Sequencer</span>
-                        <span class="text-[10px] px-2 py-0.5 rounded 
-bg-white/5 text-gray-400" id="currentPattern">16 Steps</span>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="clearPattern()" 
-class="text-[10px] px-2 py-1 rounded hover:bg-white/5 text-gray-400"><i 
-class="fas fa-trash"></i> Clear</button>
-                        <button onclick="randomizePattern()" 
-class="text-[10px] px-2 py-1 rounded hover:bg-white/5 text-gray-400"><i 
-class="fas fa-random"></i> Random</button>
+            <!-- Sequencer -->
+            <div style="height: 200px; background: #111; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 12px; font-weight: 600;">Step Sequencer (16 Steps)</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="clearSeq()" style="background: rgba(255,255,255,0.05); border: none; color: #999; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer;">Clear</button>
+                        <button onclick="randomSeq()" style="background: rgba(255,255,255,0.05); border: none; color: #999; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer;">Random</button>
                     </div>
                 </div>
-                
-                <div class="flex-1 p-4 overflow-x-auto">
-                    <div class="min-w-max">
-                        <div class="flex gap-1 mb-1">
-                            ${Array.from({length: 16}, (_, i) => `
-                                <div class="w-8 text-center text-[9px] 
-text-gray-500">${i + 1}</div>
-                            `).join('')}
-                        </div>
-                        <div id="sequencer-rows" class="space-y-1">
-                            <!-- Generated by JS -->
-                        </div>
-                    </div>
+                <div style="flex: 1; padding: 16px; overflow-x: auto;" id="sequencer-container">
+                    <!-- Generated by JS -->
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- AI Generation Modal -->
-    <div id="aiModal" class="fixed inset-0 modal hidden z-50 flex 
-items-center justify-center">
-        <div class="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 
-w-96 shadow-2xl transform scale-95 opacity-0 transition-all duration-300" 
-id="aiModalContent">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-r 
-from-purple-500 to-cyan-500 animate-pulse flex items-center 
-justify-center">
-                    <i class="fas fa-robot text-white"></i>
+    <!-- AI Modal -->
+    <div id="aiModal" class="modal">
+        <div style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #9333ea, #06b6d4); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite;">
+                    <i class="fas fa-robot" style="color: white;"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-lg">AI Composer</h3>
-                    <p class="text-xs text-gray-400">Generative 
-adversarial audio network</p>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: bold;">AI Generator</h3>
+                    <p style="margin: 0; font-size: 11px; color: #666;">Procedural Pattern Synthesis</p>
                 </div>
             </div>
-
-            <div class="space-y-3 mb-4">
-                <div>
-                    <label class="text-xs text-gray-500 block 
-mb-1">Genre/Style</label>
-                    <select id="aiGenre" class="w-full bg-[#0a0a0a] border 
-border-white/10 rounded px-3 py-2 text-sm focus:border-cyan-500 
-outline-none">
-                        <option value="techno">Techno</option>
-                        <option value="house">Deep House</option>
-                        <option value="hiphop">Hip Hop</option>
-                        <option value="ambient">Ambient</option>
-                        <option value="trap">Trap</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 block 
-mb-1">Complexity</label>
-                    <input type="range" id="aiComplexity" min="1" 
-max="100" value="50" class="w-full">
-                </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 11px; color: #666; margin-bottom: 4px; text-transform: uppercase;">Genre</label>
+                <select id="genreSelect" style="width: 100%; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 6px; font-size: 13px;">
+                    <option value="techno">Techno</option>
+                    <option value="house">House</option>
+                    <option value="hiphop">Hip Hop</option>
+                    <option value="trap">Trap</option>
+                </select>
             </div>
 
-            <button onclick="generateMusic()" class="w-full py-3 
-bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg font-medium 
-hover:opacity-90 transition flex items-center justify-center gap-2" 
-id="generateBtn">
-                <i class="fas fa-wand-magic-sparkles"></i>
-                Generate New Pattern
+            <button onclick="generate()" id="genBtn" style="width: 100%; background: linear-gradient(135deg, #9333ea, #06b6d4); border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                Generate Pattern
             </button>
 
-            <div id="aiProgress" class="hidden mt-4">
-                <div class="h-1 bg-white/10 rounded-full overflow-hidden 
-mb-2">
-                    <div class="h-full bg-gradient-to-r from-purple-500 
-to-cyan-500 w-0 transition-all duration-1000" id="progressBar"></div>
+            <div id="progress" style="display: none; margin-top: 16px;">
+                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+                    <div id="progBar" style="height: 100%; width: 0%; background: linear-gradient(to right, #9333ea, #06b6d4); transition: width 0.3s;"></div>
                 </div>
-                <div class="text-[10px] text-gray-500 text-center" 
-id="aiStatus">Initializing neural network...</div>
+                <div style="text-align: center; font-size: 11px; color: #666;" id="progText"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- AUDIO ENGINE SETUP ---
-        let isPlaying = false;
-        let isRecording = false;
-        let currentStep = 0;
-        let totalSteps = 16;
-        let instruments = {};
-        let patterns = {
-            drums: Array(4).fill(null).map(() => Array(16).fill(false)),
-            bass: Array(4).fill(null).map(() => Array(16).fill(false)),
-            lead: Array(4).fill(null).map(() => Array(16).fill(false))
-        };
-        let currentInstrument = 'drums';
-        let recorder = null;
-        let recordedChunks = [];
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
 
-        // Initialize Tone.js
+    <script>
+        // State
+        let isPlaying = false;
+        let currentStep = 0;
+        let currentInst = 'drums';
+        let instruments = {};
+        let patterns = { drums: [[],[],[],[]], bass: [[],[],[],[]], lead: [[],[],[],[]] };
+        let recorder = null;
+        
+        // Initialize patterns
+        for(let i=0; i<4; i++) {
+            for(let j=0; j<16; j++) patterns.drums[i][j] = false;
+            for(let j=0; j<16; j++) patterns.bass[i][j] = false;
+            for(let j=0; j<16; j++) patterns.lead[i][j] = false;
+        }
+
+        // Audio Init
         async function initAudio() {
             await Tone.start();
             
-            // Drum Synth
-            instruments.drums = {
-                kick: new Tone.MembraneSynth({
-                    pitchDecay: 0.05,
-                    octaves: 10,
-                    oscillator: { type: "sine" },
-                    envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, 
-release: 1.4 }
-                }).toDestination(),
-                snare: new Tone.NoiseSynth({
-                    noise: { type: 'white' },
-                    envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
-                }).toDestination(),
-                hihat: new Tone.MetalSynth({
-                    envelope: { attack: 0.001, decay: 0.1, release: 0.01 
-},
-                    harmonicity: 5.1,
-                    modulationIndex: 32,
-                    resonance: 4000,
-                    octaves: 1.5
-                }).toDestination(),
-                tom: new Tone.MembraneSynth().toDestination()
-            };
+            // Drums
+            const kick = new Tone.MembraneSynth().toDestination();
+            const snare = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { decay: 0.1 } }).toDestination();
+            const hihat = new Tone.MetalSynth({ envelope: { decay: 0.05 } }).toDestination();
+            hihat.volume.value = -10;
             
-            // Bass Synth
+            instruments.drums = [kick, snare, hihat];
+            
+            // Bass
             instruments.bass = new Tone.MonoSynth({
                 oscillator: { type: "sawtooth" },
-                envelope: { attack: 0.1, decay: 0.3, sustain: 0.2, 
-release: 2 },
-                filterEnvelope: { attack: 0.001, decay: 0.1, sustain: 0.5, 
-baseFrequency: 200, octaves: 2.6 }
+                filterEnvelope: { baseFrequency: 200 }
             }).toDestination();
             
-            // Lead Synth
-            instruments.lead = new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: "fatsawtooth", count: 3, spread: 30 },
-                envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, 
-release: 1 }
-            }).toDestination();
+            // Lead
+            instruments.lead = new Tone.PolySynth(Tone.Synth).toDestination();
             
             // Effects
-            instruments.reverb = new Tone.Reverb(3).toDestination();
-            instruments.delay = new Tone.FeedbackDelay("8n", 
-0.5).toDestination();
-            
-            // Connect effects
-            instruments.lead.connect(instruments.reverb);
-            instruments.lead.connect(instruments.delay);
+            instruments.reverb = new Tone.Reverb(2).toDestination();
+            instruments.drums[0].connect(instruments.reverb);
             instruments.bass.connect(instruments.reverb);
+            
+            // Transport
+            Tone.Transport.scheduleRepeat((time) => {
+                step(time);
+            }, "16n");
             
             // Setup recorder
             const dest = Tone.Destination;
-            recorder = new MediaRecorder(dest.stream);
-            recorder.ondataavailable = (evt) => 
-recordedChunks.push(evt.data);
-            recorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'audio/wav' 
-});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `studioai_recording_${Date.now()}.wav`;
-                a.click();
-                recordedChunks = [];
-            };
+            if(dest && dest.context && dest.context.createMediaStreamDestination) {
+                const streamDest = dest.context.createMediaStreamDestination();
+                dest.connect(streamDest);
+                recorder = new MediaRecorder(streamDest.stream);
+                const chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/wav' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'studio_export_' + Date.now() + '.wav';
+                    a.click();
+                };
+            }
             
-            // Sequencer Loop
-            Tone.Transport.scheduleRepeat((time) => {
-                updateStep(time);
-            }, "16n");
-            
-            Tone.Transport.bpm.value = 128;
-            updateSequencerUI();
-            updateMeters();
+            updateSequencer();
+            animateMeters();
         }
 
-        function updateStep(time) {
-            currentStep = (currentStep + 1) % totalSteps;
+        function step(time) {
+            currentStep = (currentStep + 1) % 16;
             
             // Update playhead
-            const percent = (currentStep / totalSteps) * 100;
-            document.getElementById('playhead').style.left = percent + 
-'%';
+            document.getElementById('playhead').style.left = (currentStep / 16 * 100) + '%';
+            document.getElementById('timeDisplay').textContent = 
+                '00:' + (currentStep < 10 ? '0'+currentStep : currentStep);
             
-            // Play drums
-            if (patterns.drums[0][currentStep]) 
-instruments.drums.kick.triggerAttackRelease("C1", "8n", time);
-            if (patterns.drums[1][currentStep]) 
-instruments.drums.snare.triggerAttackRelease("8n", time);
-            if (patterns.drums[2][currentStep]) 
-instruments.drums.hihat.triggerAttackRelease("32n", time, 0.3);
-            if (patterns.drums[3][currentStep]) 
-instruments.drums.tom.triggerAttackRelease("G2", "8n", time);
+            // Play sounds
+            if(patterns.drums[0][currentStep]) instruments.drums[0].triggerAttackRelease("C1", "8n", time);
+            if(patterns.drums[1][currentStep]) instruments.drums[1].triggerAttackRelease("8n", time);
+            if(patterns.drums[2][currentStep]) instruments.drums[2].triggerAttackRelease("32n", time);
             
-            // Play bass (procedural from pattern)
-            if (patterns.bass[0][currentStep]) 
-instruments.bass.triggerAttackRelease("C2", "16n", time);
-            if (patterns.bass[1][currentStep]) 
-instruments.bass.triggerAttackRelease("E2", "16n", time);
-            if (patterns.bass[2][currentStep]) 
-instruments.bass.triggerAttackRelease("G2", "16n", time);
-            if (patterns.bass[3][currentStep]) 
-instruments.bass.triggerAttackRelease("A1", "16n", time);
+            if(patterns.bass[0][currentStep]) instruments.bass.triggerAttackRelease("C2", "16n", time);
+            if(patterns.bass[1][currentStep]) instruments.bass.triggerAttackRelease("E2", "16n", time);
             
-            // Visual feedback
+            // Visual
             document.querySelectorAll('.step-btn').forEach((btn, idx) => {
                 const step = idx % 16;
-                if (step === currentStep) {
-                    btn.classList.add('playing');
-                    setTimeout(() => btn.classList.remove('playing'), 
-100);
+                if(step === currentStep) {
+                    btn.style.borderColor = 'white';
+                    btn.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        btn.style.borderColor = '';
+                        btn.style.transform = '';
+                    }, 100);
                 }
             });
         }
 
-        // --- UI CONTROLS ---
-        document.getElementById('playBtn').addEventListener('click', async 
-() => {
-            if (!instruments.drums) await initAudio();
+        // Controls
+        document.getElementById('playBtn').onclick = async function() {
+            if(!instruments.drums) await initAudio();
             
-            if (isPlaying) {
+            if(isPlaying) {
                 Tone.Transport.pause();
                 isPlaying = false;
-                document.getElementById('playIcon').className = 'fas 
-fa-play ml-0.5';
-                
-document.getElementById('playBtn').classList.remove('bg-green-500');
-                
-document.getElementById('playBtn').classList.add('bg-cyan-500');
+                this.style.background = '#06b6d4';
+                document.getElementById('playIcon').className = 'fas fa-play';
             } else {
                 Tone.Transport.start();
                 isPlaying = true;
-                document.getElementById('playIcon').className = 'fas 
-fa-pause';
-                
-document.getElementById('playBtn').classList.remove('bg-cyan-500');
-                
-document.getElementById('playBtn').classList.add('bg-green-500');
+                this.style.background = '#22c55e';
+                document.getElementById('playIcon').className = 'fas fa-pause';
             }
-        });
+        };
 
-        document.getElementById('stopBtn').addEventListener('click', () => 
-{
+        document.getElementById('stopBtn').onclick = function() {
             Tone.Transport.stop();
             currentStep = 0;
             isPlaying = false;
             document.getElementById('playhead').style.left = '0%';
-            document.getElementById('playIcon').className = 'fas fa-play 
-ml-0.5';
-            
-document.getElementById('playBtn').classList.remove('bg-green-500');
-            
-document.getElementById('playBtn').classList.add('bg-cyan-500');
-        });
+            document.getElementById('playBtn').style.background = '#06b6d4';
+            document.getElementById('playIcon').className = 'fas fa-play';
+        };
 
-        document.getElementById('recordBtn').addEventListener('click', () 
-=> {
-            if (!recorder) return;
-            
-            if (isRecording) {
-                recorder.stop();
-                isRecording = false;
-                
-document.getElementById('recIndicator').classList.add('hidden');
-                
-document.getElementById('recIcon').classList.remove('hidden');
-            } else {
-                recordedChunks = [];
-                recorder.start();
-                isRecording = true;
-                
-document.getElementById('recIndicator').classList.remove('hidden');
-                
-document.getElementById('recIcon').classList.add('hidden');
-                if (!isPlaying) 
-document.getElementById('playBtn').click();
-            }
-        });
+        document.getElementById('bpmInput').onchange = function() {
+            Tone.Transport.bpm.value = this.value;
+        };
 
-        document.getElementById('bpmInput').addEventListener('change', (e) 
-=> {
-            Tone.Transport.bpm.value = e.target.value;
-        });
-
-        // --- SEQUENCER UI ---
-        function updateSequencerUI() {
-            const container = document.getElementById('sequencer-rows');
+        // Sequencer UI
+        function updateSequencer() {
+            const container = document.getElementById('sequencer-container');
             container.innerHTML = '';
             
-            const labels = currentInstrument === 'drums' ? ['Kick', 
-'Snare', 'Hi-Hat', 'Tom'] :
-                          currentInstrument === 'bass' ? ['C', 'E', 'G', 
-'A'] :
-                          ['Note 1', 'Note 2', 'Note 3', 'Note 4'];
+            const labels = currentInst === 'drums' ? ['Kick', 'Snare', 'Hi-Hat'] : 
+                          currentInst === 'bass' ? ['C', 'E', 'G'] : ['Note 1', 'Note 2', 'Note 3'];
             
-            labels.forEach((label, row) => {
+            for(let row=0; row<3; row++) {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'flex gap-1 items-center';
+                rowDiv.style.display = 'flex';
+                rowDiv.style.gap = '4px';
+                rowDiv.style.marginBottom = '8px';
+                rowDiv.style.alignItems = 'center';
                 
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'w-12 text-[10px] text-gray-400 
-font-medium';
-                labelDiv.textContent = label;
-                rowDiv.appendChild(labelDiv);
+                const label = document.createElement('div');
+                label.style.width = '50px';
+                label.style.fontSize = '11px';
+                label.style.color = '#666';
+                label.textContent = labels[row];
+                rowDiv.appendChild(label);
                 
-                for (let step = 0; step < 16; step++) {
+                for(let step=0; step<16; step++) {
                     const btn = document.createElement('div');
-                    btn.className = `step-btn w-8 
-${patterns[currentInstrument][row][step] ? 'active' : ''}`;
-                    btn.onclick = () => toggleStep(row, step);
+                    btn.className = 'step-btn';
+                    if(patterns[currentInst][row][step]) btn.classList.add('active');
+                    btn.onclick = () => {
+                        patterns[currentInst][row][step] = !patterns[currentInst][row][step];
+                        updateSequencer();
+                    };
                     rowDiv.appendChild(btn);
                 }
-                
                 container.appendChild(rowDiv);
-            });
+            }
         }
 
-        function toggleStep(row, step) {
-            patterns[currentInstrument][row][step] = 
-!patterns[currentInstrument][row][step];
-            updateSequencerUI();
-        }
-
-        function setInstrument(instr) {
-            currentInstrument = instr;
-            document.querySelectorAll('.instr-btn').forEach(btn => {
-                if (btn.dataset.instr === instr) {
-                    btn.classList.add('bg-cyan-500/20', 
-'border-cyan-500/30', 'text-cyan-400');
-                    btn.classList.remove('text-gray-300');
+        function setInst(inst) {
+            currentInst = inst;
+            ['drums','bass','lead'].forEach(i => {
+                const btn = document.getElementById('btn-'+i);
+                if(i === inst) {
+                    btn.style.background = 'rgba(6,182,212,0.2)';
+                    btn.style.borderColor = 'rgba(6,182,212,0.3)';
+                    btn.style.color = '#06b6d4';
                 } else {
-                    btn.classList.remove('bg-cyan-500/20', 
-'border-cyan-500/30', 'text-cyan-400');
-                    btn.classList.add('text-gray-300');
+                    btn.style.background = 'transparent';
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    btn.style.color = '#999';
                 }
             });
-            updateSequencerUI();
+            updateSequencer();
         }
 
-        function clearPattern() {
-            patterns[currentInstrument] = Array(4).fill(null).map(() => 
-Array(16).fill(false));
-            updateSequencerUI();
+        function clearSeq() {
+            for(let i=0; i<4; i++) {
+                for(let j=0; j<16; j++) patterns[currentInst][i][j] = false;
+            }
+            updateSequencer();
         }
 
-        function randomizePattern() {
-            patterns[currentInstrument] = Array(4).fill(null).map(() => 
-                Array(16).fill(false).map(() => Math.random() > 0.7)
-            );
-            updateSequencerUI();
+        function randomSeq() {
+            for(let i=0; i<4; i++) {
+                for(let j=0; j<16; j++) patterns[currentInst][i][j] = Math.random() > 0.7;
+            }
+            updateSequencer();
         }
 
-        // --- AI GENERATION (Procedural) ---
-        function showAIModal() {
-            const modal = document.getElementById('aiModal');
-            const content = document.getElementById('aiModalContent');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
+        // AI Modal
+        function openModal() {
+            document.getElementById('aiModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('aiModal').classList.remove('show');
         }
 
-        function generateMusic() {
-            const genre = document.getElementById('aiGenre').value;
-            const complexity = 
-document.getElementById('aiComplexity').value;
-            const btn = document.getElementById('generateBtn');
-            const progress = document.getElementById('aiProgress');
-            const bar = document.getElementById('progressBar');
-            const status = document.getElementById('aiStatus');
+        function generate() {
+            const btn = document.getElementById('genBtn');
+            const prog = document.getElementById('progress');
+            const bar = document.getElementById('progBar');
+            const text = document.getElementById('progText');
+            const genre = document.getElementById('genreSelect').value;
             
             btn.disabled = true;
-            progress.classList.remove('hidden');
+            prog.style.display = 'block';
             
-            // Simulate AI processing steps
-            const steps = ['Analyzing genre patterns...', 'Generating 
-harmonic structure...', 'Synthesizing waveforms...', 'Finalizing...'];
-            let step = 0;
+            const steps = ['Analyzing...', 'Synthesizing...', 'Optimizing...', 'Done!'];
+            let i = 0;
             
             const interval = setInterval(() => {
-                bar.style.width = ((step + 1) / steps.length * 100) + '%';
-                status.textContent = steps[step];
-                step++;
-                
-                if (step >= steps.length) {
+                bar.style.width = ((i+1)/4*100) + '%';
+                text.textContent = steps[i];
+                i++;
+                if(i >= 4) {
                     clearInterval(interval);
                     setTimeout(() => {
-                        applyGeneratedPattern(genre, complexity);
-                        
-document.getElementById('aiModal').classList.add('hidden');
+                        applyPattern(genre);
+                        closeModal();
                         btn.disabled = false;
-                        progress.classList.add('hidden');
+                        prog.style.display = 'none';
                         bar.style.width = '0%';
                     }, 500);
                 }
-            }, 600);
+            }, 400);
         }
 
-        function applyGeneratedPattern(genre, complexity) {
-            // Procedural generation based on genre
-            const density = complexity / 100;
-            
-            if (genre === 'techno') {
-                patterns.drums = [
-                    Array(16).fill(false).map((_,i) => i % 4 === 0), // 
-Kick on quarters
-                    Array(16).fill(false).map((_,i) => i % 8 === 4), // 
-Snare on 2 and 4
-                    Array(16).fill(false).map((_,i) => i % 2 === 0 && 
-Math.random() < density), // Hats
-                    Array(16).fill(false)
-                ];
-            } else if (genre === 'hiphop') {
-                patterns.drums = [
-                    Array(16).fill(false).map((_,i) => 
-[0,4,8,12].includes(i)), // Kick
-                    Array(16).fill(false).map((_,i) => 
-[4,12].includes(i)), // Snare
-                    Array(16).fill(false).map((_,i) => i % 4 === 2), // 
-Open hats
-                ];
+        function applyPattern(genre) {
+            clearSeq();
+            if(genre === 'techno') {
+                for(let i=0; i<16; i++) {
+                    if(i%4===0) patterns.drums[0][i] = true; // Kick
+                    if(i%4===2) patterns.drums[1][i] = true; // Snare
+                    if(i%2===0) patterns.drums[2][i] = true; // Hats
+                }
+            } else if(genre === 'hiphop') {
+                [0,4,8,12].forEach(i => patterns.drums[0][i] = true); // Kick
+                [4,12].forEach(i => patterns.drums[1][i] = true); // Snare
+                [2,6,10,14].forEach(i => patterns.drums[2][i] = true); // Hats
             } else {
-                randomizePattern();
+                randomSeq();
             }
-            
-            setInstrument('drums');
-            
-            // Add a clip to timeline visually
-            const track0 = document.getElementById('track-0');
-            const clip = document.createElement('div');
-            clip.className = 'clip';
-            clip.style.left = '8px';
-            clip.style.width = '200px';
-            clip.innerHTML = `<i class="fas fa-drum mr-2"></i> AI 
-${genre.charAt(0).toUpperCase() + genre.slice(1)} Pattern`;
-            track0.appendChild(clip);
+            updateSequencer();
         }
 
-        // --- EFFECTS ---
-        function updateEffect(type, value) {
-            if (!instruments.reverb) return;
-            const val = value / 100;
-            
-            if (type === 'reverb') {
-                instruments.reverb.wet.value = val;
-                document.getElementById('reverbVal').textContent = value + 
-'%';
-            } else if (type === 'delay') {
-                instruments.delay.wet.value = val;
-                document.getElementById('delayVal').textContent = value + 
-'%';
-            } else if (type === 'filter') {
-                const freq = 100 + (val * 9000);
-                instruments.lead.set({ filterEnvelope: { baseFrequency: 
-freq }});
-                document.getElementById('filterVal').textContent = value + 
-'%';
-            }
-        }
+        // Close modal on outside click
+        document.getElementById('aiModal').onclick = function(e) {
+            if(e.target === this) closeModal();
+        };
 
-        function setTrackVolume(track, val) {
-            // Implementation would control track gain nodes
-        }
-
-        function toggleMute(track) {
-            // Toggle mute logic
-        }
-
-        // --- VISUALIZER ---
-        function updateMeters() {
-            if (!instruments.drums) return;
-            
-            const meters = document.querySelectorAll('.meter-bar');
-            meters.forEach(meter => {
-                const height = Math.random() * 100;
-                meter.style.height = height + '%';
-                meter.className = `flex-1 rounded-t meter-bar ${height > 
-80 ? 'bg-red-500' : height > 50 ? 'bg-yellow-500' : 'bg-green-500'}`;
+        // Meters
+        function animateMeters() {
+            const bars = document.querySelectorAll('.meter-bar');
+            bars.forEach(bar => {
+                const h = Math.random() * 100;
+                bar.style.height = h + '%';
+                bar.style.background = h > 80 ? '#ef4444' : h > 50 ? '#eab308' : '#22c55e';
             });
-            
-            requestAnimationFrame(updateMeters);
+            requestAnimationFrame(animateMeters);
         }
 
-        // --- EXPORT ---
+        // Export
         function exportWAV() {
-            if (!recorder) return alert('Please initialize audio first 
-(click play)');
-            
-            // Start record, wait 4 bars, stop
-            recordedChunks = [];
-            recorder.start();
-            
-            if (!isPlaying) document.getElementById('playBtn').click();
-            
-            setTimeout(() => {
-                recorder.stop();
-                alert('Exporting... File will download automatically.');
-            }, 4000);
+            if(!recorder) return alert('Audio not initialized. Click Play first.');
+            if(recorder.state === 'inactive') {
+                recorder.start();
+                if(!isPlaying) document.getElementById('playBtn').click();
+                setTimeout(() => {
+                    recorder.stop();
+                    alert('Download started!');
+                }, 3000);
+            }
         }
 
-        // --- DRAG AND DROP ---
-        let draggedElement = null;
-        let dragOffset = { x: 0, y: 0 };
+        // Drag and drop
+        let dragged = null;
+        let dragOffset = {x:0,y:0};
 
-        function startDrag(e, element) {
-            draggedElement = element;
-            dragOffset.x = e.clientX - element.offsetLeft;
-            dragOffset.y = e.clientY - element.offsetTop;
-            element.classList.add('dragging');
-            
+        function startDrag(e, el) {
+            dragged = el;
+            dragOffset.x = e.clientX - el.offsetLeft;
+            dragOffset.y = e.clientY - el.offsetTop;
+            el.style.zIndex = 1000;
             document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('mouseup', endDrag);
         }
 
         function onDrag(e) {
-            if (!draggedElement) return;
-            draggedElement.style.left = (e.clientX - dragOffset.x) + 'px';
-            draggedElement.style.top = (e.clientY - dragOffset.y) + 'px';
+            if(!dragged) return;
+            dragged.style.left = (e.clientX - dragOffset.x) + 'px';
+            dragged.style.top = (e.clientY - dragOffset.y) + 'px';
         }
 
-        function stopDrag() {
-            if (draggedElement) {
-                draggedElement.classList.remove('dragging');
-                draggedElement = null;
-            }
+        function endDrag() {
+            if(dragged) dragged.style.zIndex = '';
+            dragged = null;
             document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('mouseup', endDrag);
         }
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
+        // Keyboard
+        document.onkeydown = (e) => {
+            if(e.code === 'Space') {
                 e.preventDefault();
                 document.getElementById('playBtn').click();
             }
-        });
+        };
 
-        // Initialize on load
-        window.addEventListener('load', () => {
-            // Pre-fill some patterns
-            patterns.drums[0][0] = true;
-            patterns.drums[0][8] = true;
-            patterns.drums[1][4] = true;
-            patterns.drums[1][12] = true;
-            patterns.drums[2][2] = true;
-            patterns.drums[2][6] = true;
-            patterns.drums[2][10] = true;
-            patterns.drums[2][14] = true;
-        });
+        // Default pattern
+        patterns.drums[0][0] = true;
+        patterns.drums[0][8] = true;
+        patterns.drums[1][4] = true;
+        patterns.drums[1][12] = true;
+        setInst('drums');
     </script>
 </body>
 </html>
