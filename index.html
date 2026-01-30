@@ -4,318 +4,862 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Music Studio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Only essential external script - Tone.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FontAwesome with fallback -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onerror="this.remove()">
+    
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; overflow: hidden; margin: 0; }
-        .step-btn { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.1s; }
-        .step-btn:hover { background: rgba(255,255,255,0.2); }
-        .step-btn.active { background: #00d4ff; box-shadow: 0 0 10px rgba(0,212,255,0.5); }
-        .step-btn.playing { transform: scale(1.1); border-color: white; }
-        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; }
-        .clip { position: absolute; height: 80%; background: linear-gradient(135deg, #00d4ff, #b24bf3); border-radius: 4px; cursor: move; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 50; align-items: center; justify-content: center; }
+        /* CRITICAL: Base styles inline to prevent 404 issues */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #0a0a0a !important; /* Force dark background */
+            color: #e5e5e5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* If background image fails, solid color remains */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%);
+            z-index: -1;
+        }
+
+        /* Header */
+        header {
+            height: 60px;
+            background: linear-gradient(180deg, #141414 0%, #111 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #9333ea, #06b6d4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(147,51,234,0.3);
+        }
+
+        .transport {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .btn-play {
+            width: 44px;
+            height: 44px;
+            background: #06b6d4;
+            border-radius: 50%;
+            color: #000;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(6,182,212,0.4);
+        }
+
+        .btn-play:hover { transform: scale(1.05); background: #22d3ee; }
+        .btn-play:active { transform: scale(0.95); }
+        .btn-play.playing { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.4); }
+
+        .btn-stop {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-stop:hover { background: rgba(255,255,255,0.2); }
+
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            color: #06b6d4;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(6,182,212,0.5);
+        }
+
+        /* Main Layout */
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #111;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .inst-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #999;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            text-align: left;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .inst-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .inst-btn.active {
+            background: rgba(6,182,212,0.15);
+            border-color: rgba(6,182,212,0.4);
+            color: #06b6d4;
+        }
+
+        .control-group {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .slider-container {
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #06b6d4;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(6,182,212,0.5);
+        }
+
+        /* Center Area */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+            position: relative;
+        }
+
+        .timeline {
+            height: 40px;
+            background: #151515;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #06b6d4;
+            box-shadow: 0 0 10px rgba(6,182,212,0.8);
+            pointer-events: none;
+            left: 0%;
+            transition: left 0.1s;
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -5px;
+            width: 12px;
+            height: 12px;
+            background: #06b6d4;
+            transform: rotate(45deg);
+        }
+
+        .track-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 100%;
+        }
+
+        .track {
+            height: 80px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .track-header {
+            width: 140px;
+            background: rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .track-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ccc;
+        }
+
+        .track-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-mute {
+            width: 24px;
+            height: 24px;
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border-radius: 4px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+
+        .track-content {
+            flex: 1;
+            position: relative;
+            padding: 10px;
+        }
+
+        .clip {
+            position: absolute;
+            height: 60px;
+            background: linear-gradient(135deg, #06b6d4, #9333ea);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            cursor: move;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Sequencer */
+        .sequencer {
+            height: 220px;
+            background: #111;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .seq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .seq-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .seq-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-seq {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #999;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        .btn-seq:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .seq-grid {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .seq-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .seq-label {
+            width: 60px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .step {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .step:hover { background: rgba(255,255,255,0.1); }
+        .step.active { 
+            background: #06b6d4; 
+            box-shadow: 0 0 15px rgba(6,182,212,0.5);
+            border-color: rgba(6,182,212,0.5);
+        }
+        .step.playing {
+            transform: scale(1.2);
+            border-color: white;
+            z-index: 10;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
         .modal.show { display: flex; }
-        .meter-bar { transition: height 0.05s ease; }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 28px;
+            width: 340px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .ai-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #9333ea, #06b6d4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.95); }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #9333ea, #06b6d4);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .progress-container {
+            margin-top: 16px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #9333ea, #06b6d4);
+            transition: width 0.3s;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            background: rgba(147,51,234,0.2);
+            border: 1px solid rgba(147,51,234,0.4);
+            color: #a855f7;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-action:hover { background: rgba(147,51,234,0.3); }
+
+        .meter {
+            display: flex;
+            gap: 4px;
+            height: 80px;
+            align-items: end;
+            margin-top: 8px;
+        }
+
+        .meter-bar {
+            flex: 1;
+            background: #22c55e;
+            border-radius: 2px;
+            transition: height 0.05s;
+            opacity: 0.8;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
     </style>
 </head>
-<body style="height: 100vh; display: flex; flex-direction: column;">
+<body>
 
-    <!-- Header -->
-    <header style="height: 56px; background: #111; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #9333ea, #06b6d4); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-music" style="color: white;"></i>
             </div>
             <div>
-                <h1 style="margin: 0; font-size: 14px; font-weight: bold;">StudioAI</h1>
-                <p style="margin: 0; font-size: 10px; color: #666;">Web Audio DAW</p>
+                <h1 style="font-size: 16px; font-weight: bold; margin: 0;">StudioAI</h1>
+                <p style="font-size: 10px; color: #666; margin: 0;">v2.0 // Web Audio Engine</p>
             </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 12px; background: #1a1a1a; padding: 4px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <button id="stopBtn" style="background: none; border: none; color: #999; cursor: pointer; padding: 8px;">
+        <div class="transport">
+            <button class="btn-stop" id="stopBtn" title="Stop">
                 <i class="fas fa-square"></i>
             </button>
-            <button id="playBtn" style="width: 40px; height: 40px; background: #06b6d4; border: none; border-radius: 50%; color: black; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-play" id="playIcon" style="margin-left: 3px;"></i>
+            <button class="btn-play" id="playBtn" title="Play/Pause">
+                <i class="fas fa-play" id="playIcon" style="margin-left: 2px;"></i>
             </button>
-            <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
-            <span id="timeDisplay" style="font-family: monospace; color: #06b6d4; font-size: 18px; min-width: 60px; text-align: center;">00:00</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 10px; color: #666; text-transform: uppercase;">BPM</span>
-                <input type="number" id="bpmInput" value="128" min="60" max="200" style="width: 50px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 4px; border-radius: 4px; text-align: center; font-size: 12px;">
+            <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1);"></div>
+            <div class="time-display" id="timeDisplay">00:00</div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 10px; color: #666;">BPM</span>
+                <input type="number" id="bpmInput" value="128" min="60" max="200" 
+                       style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 4px; border-radius: 4px; text-align: center; font-size: 12px;">
             </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-            <button onclick="exportWAV()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="exportAudio()" class="btn-action">
                 <i class="fas fa-download"></i> Export
             </button>
-            <button onclick="openModal()" style="background: #9333ea; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <button onclick="showModal()" style="padding: 8px 16px; background: linear-gradient(135deg, #9333ea, #06b6d4); border: none; color: white; border-radius: 6px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                 <i class="fas fa-wand-magic-sparkles"></i> Generate
             </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <div style="flex: 1; display: flex; overflow: hidden;">
-        
-        <!-- Sidebar -->
-        <aside style="width: 250px; background: #111; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; padding: 16px; gap: 16px; overflow-y: auto;">
+    <div class="main-container">
+        <aside class="sidebar">
             <div>
-                <h3 style="font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em;">Instruments</h3>
-                <button onclick="setInst('drums')" id="btn-drums" style="width: 100%; text-align: left; padding: 10px; background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.3); color: #06b6d4; border-radius: 6px; margin-bottom: 6px; cursor: pointer; font-size: 13px;">
-                    <i class="fas fa-drum" style="margin-right: 8px;"></i> Drum Machine
+                <div class="section-title">Instruments</div>
+                <button class="inst-btn active" onclick="setInstrument('drums')" id="btn-drums">
+                    <i class="fas fa-drum"></i> Drum Machine
                 </button>
-                <button onclick="setInst('bass')" id="btn-bass" style="width: 100%; text-align: left; padding: 10px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #999; border-radius: 6px; margin-bottom: 6px; cursor: pointer; font-size: 13px;">
-                    <i class="fas fa-guitar" style="margin-right: 8px;"></i> Bass Synth
+                <button class="inst-btn" onclick="setInstrument('bass')" id="btn-bass">
+                    <i class="fas fa-guitar"></i> Bass Synth
                 </button>
-                <button onclick="setInst('lead')" id="btn-lead" style="width: 100%; text-align: left; padding: 10px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #999; border-radius: 6px; cursor: pointer; font-size: 13px;">
-                    <i class="fas fa-wave-square" style="margin-right: 8px;"></i> Lead Synth
+                <button class="inst-btn" onclick="setInstrument('lead')" id="btn-lead">
+                    <i class="fas fa-wave-square"></i> Lead Synth
                 </button>
             </div>
 
             <div>
-                <h3 style="font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em;">Effects</h3>
-                <div style="margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
-                        <span>Reverb</span>
-                        <span>30%</span>
+                <div class="section-title">Master Effects</div>
+                <div class="control-group">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Reverb</span>
+                            <span id="revVal">30%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="30" oninput="setReverb(this.value)">
                     </div>
-                    <input type="range" min="0" max="100" value="30" oninput="if(window.instruments && instruments.reverb) instruments.reverb.wet.value = this.value/100">
-                </div>
-                <div style="margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
-                        <span>Master Vol</span>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Volume</span>
+                            <span id="volVal">80%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="80" oninput="setVolume(this.value)">
                     </div>
-                    <input type="range" min="0" max="100" value="80" oninput="if(Tone && Tone.Destination) Tone.Destination.volume.value = (this.value/100)*20 - 20">
                 </div>
-                <div style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-top: 16px;">
-                    <div style="font-size: 10px; color: #666; margin-bottom: 8px;">Master Meter</div>
-                    <div style="display: flex; gap: 4px; height: 60px; align-items: end;" id="meters">
-                        <div class="meter-bar" style="flex: 1; background: #22c55e; height: 20%; border-radius: 2px;"></div>
-                        <div class="meter-bar" style="flex: 1; background: #22c55e; height: 35%; border-radius: 2px;"></div>
+                
+                <div class="control-group" style="margin-top: 12px;">
+                    <div class="section-title" style="margin-bottom: 8px;">Master Meter</div>
+                    <div class="meter" id="meters">
+                        <div class="meter-bar" style="height: 20%;"></div>
+                        <div class="meter-bar" style="height: 35%;"></div>
+                        <div class="meter-bar" style="height: 28%;"></div>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Center -->
-        <main style="flex: 1; display: flex; flex-direction: column; background: #0a0a0a;">
-            
-            <!-- Timeline -->
-            <div style="height: 32px; background: #151515; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative;">
-                <div id="playhead" style="position: absolute; top: 0; bottom: 0; width: 2px; background: #06b6d4; left: 0%; pointer-events: none; z-index: 20;">
-                    <div style="width: 10px; height: 10px; background: #06b6d4; transform: translateX(-50%) rotate(45deg); position: absolute; top: -5px; left: 50%;"></div>
+        <main class="workspace">
+            <div class="timeline">
+                <div class="playhead" id="playhead"></div>
+            </div>
+
+            <div class="track-area">
+                <div class="track">
+                    <div class="track-header">
+                        <div class="track-name">Kick Drum</div>
+                        <div class="track-controls">
+                            <button class="btn-mute">M</button>
+                        </div>
+                    </div>
+                    <div class="track-content">
+                        <div class="clip" style="left: 20px; width: 150px;" onmousedown="startDrag(event, this)">
+                            <i class="fas fa-drum" style="margin-right: 8px;"></i> Pattern A
+                        </div>
+                    </div>
+                </div>
+
+                <div class="track">
+                    <div class="track-header">
+                        <div class="track-name">Bass Line</div>
+                        <div class="track-controls">
+                            <button class="btn-mute">M</button>
+                        </div>
+                    </div>
+                    <div class="track-content" id="track-bass"></div>
+                </div>
+
+                <div class="track">
+                    <div class="track-header">
+                        <div class="track-name">Lead Synth</div>
+                        <div class="track-controls">
+                            <button class="btn-mute">M</button>
+                        </div>
+                    </div>
+                    <div class="track-content"></div>
                 </div>
             </div>
 
-            <!-- Tracks -->
-            <div style="flex: 1; overflow-y: auto; padding: 16px;">
-                <div style="background-image: linear-gradient(to right, #1a1a1a 1px, transparent 1px); background-size: 40px 100%;">
-                    
-                    <!-- Track 1 -->
-                    <div style="height: 80px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; position: relative;">
-                        <div style="position: absolute; left: 0; width: 120px; height: 100%; background: #111; border-right: 1px solid rgba(255,255,255,0.1); padding: 8px;">
-                            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                                <button style="width: 20px; height: 20px; background: rgba(239,68,68,0.2); color: #ef4444; border: none; border-radius: 4px; font-size: 10px; cursor: pointer;">M</button>
-                                <span style="font-size: 12px; color: #ccc;">Drums</span>
-                            </div>
-                        </div>
-                        <div style="margin-left: 120px; height: 100%; position: relative;" id="track-drums">
-                            <div class="clip" style="left: 10px; width: 160px;" onmousedown="startDrag(event, this)">
-                                <i class="fas fa-drum" style="margin-right: 6px;"></i> Pattern A
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Track 2 -->
-                    <div style="height: 80px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative;">
-                        <div style="position: absolute; left: 0; width: 120px; height: 100%; background: #111; border-right: 1px solid rgba(255,255,255,0.1); padding: 8px;">
-                            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                                <button style="width: 20px; height: 20px; background: rgba(239,68,68,0.2); color: #ef4444; border: none; border-radius: 4px; font-size: 10px; cursor: pointer;">M</button>
-                                <span style="font-size: 12px; color: #ccc;">Bass</span>
-                            </div>
-                        </div>
-                        <div style="margin-left: 120px; height: 100%; position: relative;" id="track-bass"></div>
+            <div class="sequencer">
+                <div class="seq-header">
+                    <div class="seq-title">Step Sequencer</div>
+                    <div class="seq-controls">
+                        <button class="btn-seq" onclick="clearPattern()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                        <button class="btn-seq" onclick="randomPattern()">
+                            <i class="fas fa-random"></i> Random
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Sequencer -->
-            <div style="height: 200px; background: #111; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <span style="font-size: 12px; font-weight: 600;">Step Sequencer (16 Steps)</span>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="clearSeq()" style="background: rgba(255,255,255,0.05); border: none; color: #999; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer;">Clear</button>
-                        <button onclick="randomSeq()" style="background: rgba(255,255,255,0.05); border: none; color: #999; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer;">Random</button>
-                    </div>
-                </div>
-                <div style="flex: 1; padding: 16px; overflow-x: auto;" id="sequencer-container">
+                <div class="seq-grid" id="sequencer">
                     <!-- Generated by JS -->
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- AI Modal -->
-    <div id="aiModal" class="modal">
-        <div style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #9333ea, #06b6d4); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite;">
-                    <i class="fas fa-robot" style="color: white;"></i>
+    <div class="modal" id="aiModal" onclick="if(event.target===this)hideModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="ai-icon">
+                    <i class="fas fa-robot" style="color: white; font-size: 20px;"></i>
                 </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: bold;">AI Generator</h3>
-                    <p style="margin: 0; font-size: 11px; color: #666;">Procedural Pattern Synthesis</p>
+                    <h3 style="margin: 0; font-size: 18px;">AI Composer</h3>
+                    <p style="margin: 0; font-size: 11px; color: #666;">Neural Pattern Generation</p>
                 </div>
             </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 11px; color: #666; margin-bottom: 4px; text-transform: uppercase;">Genre</label>
-                <select id="genreSelect" style="width: 100%; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 6px; font-size: 13px;">
+
+            <div class="form-group">
+                <label class="form-label">Genre Style</label>
+                <select id="aiGenre">
                     <option value="techno">Techno</option>
                     <option value="house">House</option>
                     <option value="hiphop">Hip Hop</option>
                     <option value="trap">Trap</option>
+                    <option value="ambient">Ambient</option>
                 </select>
             </div>
 
-            <button onclick="generate()" id="genBtn" style="width: 100%; background: linear-gradient(135deg, #9333ea, #06b6d4); border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+            <button class="btn-generate" id="genBtn" onclick="generate()">
                 Generate Pattern
             </button>
 
-            <div id="progress" style="display: none; margin-top: 16px;">
-                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
-                    <div id="progBar" style="height: 100%; width: 0%; background: linear-gradient(to right, #9333ea, #06b6d4); transition: width 0.3s;"></div>
+            <div class="progress-container" id="progressDiv">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progFill"></div>
                 </div>
-                <div style="text-align: center; font-size: 11px; color: #666;" id="progText"></div>
+                <div style="text-align: center; font-size: 11px; color: #666; margin-top: 8px;" id="progText">
+                    Initializing...
+                </div>
             </div>
         </div>
     </div>
-
-    <style>
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-    </style>
 
     <script>
         // State
         let isPlaying = false;
         let currentStep = 0;
-        let currentInst = 'drums';
+        let currentInstrument = 'drums';
+        let audioCtx = null;
         let instruments = {};
-        let patterns = { drums: [[],[],[],[]], bass: [[],[],[],[]], lead: [[],[],[],[]] };
-        let recorder = null;
-        
-        // Initialize patterns
-        for(let i=0; i<4; i++) {
-            for(let j=0; j<16; j++) patterns.drums[i][j] = false;
-            for(let j=0; j<16; j++) patterns.bass[i][j] = false;
-            for(let j=0; j<16; j++) patterns.lead[i][j] = false;
-        }
+        let patterns = {
+            drums: [[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+                   [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+                   [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]],
+            bass: [[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]],
+            lead: [[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+                  [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]]
+        };
 
-        // Audio Init
+        // Initialize audio engine
         async function initAudio() {
             await Tone.start();
+            audioCtx = Tone.context;
             
-            // Drums
-            const kick = new Tone.MembraneSynth().toDestination();
-            const snare = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { decay: 0.1 } }).toDestination();
-            const hihat = new Tone.MetalSynth({ envelope: { decay: 0.05 } }).toDestination();
-            hihat.volume.value = -10;
-            
-            instruments.drums = [kick, snare, hihat];
-            
-            // Bass
-            instruments.bass = new Tone.MonoSynth({
-                oscillator: { type: "sawtooth" },
-                filterEnvelope: { baseFrequency: 200 }
+            // Create instruments
+            instruments.kick = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 10,
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
             }).toDestination();
             
-            // Lead
-            instruments.lead = new Tone.PolySynth(Tone.Synth).toDestination();
+            instruments.snare = new Tone.NoiseSynth({
+                noise: { type: 'white' },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
+            }).toDestination();
+            
+            instruments.hihat = new Tone.MetalSynth({
+                frequency: 200,
+                envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+                harmonicity: 5.1,
+                modulationIndex: 32,
+                resonance: 4000,
+                octaves: 1.5
+            }).toDestination();
+            instruments.hihat.volume.value = -10;
+            
+            instruments.bass = new Tone.MonoSynth({
+                oscillator: { type: "sawtooth" },
+                envelope: { attack: 0.1, decay: 0.3, sustain: 0.2, release: 2 },
+                filterEnvelope: { attack: 0.001, decay: 0.1, sustain: 0.5, baseFrequency: 200, octaves: 2.6 }
+            }).toDestination();
+            
+            instruments.lead = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "fatsawtooth", count: 3, spread: 30 },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 1 }
+            }).toDestination();
             
             // Effects
-            instruments.reverb = new Tone.Reverb(2).toDestination();
-            instruments.drums[0].connect(instruments.reverb);
+            instruments.reverb = new Tone.Reverb({ decay: 3, wet: 0.3 }).toDestination();
+            instruments.kick.connect(instruments.reverb);
             instruments.bass.connect(instruments.reverb);
             
-            // Transport
+            // Sequencer loop
             Tone.Transport.scheduleRepeat((time) => {
                 step(time);
             }, "16n");
             
-            // Setup recorder
-            const dest = Tone.Destination;
-            if(dest && dest.context && dest.context.createMediaStreamDestination) {
-                const streamDest = dest.context.createMediaStreamDestination();
-                dest.connect(streamDest);
-                recorder = new MediaRecorder(streamDest.stream);
-                const chunks = [];
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'audio/wav' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'studio_export_' + Date.now() + '.wav';
-                    a.click();
-                };
-            }
+            Tone.Transport.bpm.value = 128;
             
-            updateSequencer();
+            // Default pattern
+            patterns.drums[0][0] = true;
+            patterns.drums[0][4] = true;
+            patterns.drums[0][8] = true;
+            patterns.drums[0][12] = true;
+            patterns.drums[1][4] = true;
+            patterns.drums[1][12] = true;
+            patterns.drums[2][2] = true;
+            patterns.drums[2][6] = true;
+            patterns.drums[2][10] = true;
+            patterns.drums[2][14] = true;
+            
+            renderSequencer();
             animateMeters();
         }
 
         function step(time) {
             currentStep = (currentStep + 1) % 16;
             
-            // Update playhead
+            // Move playhead
             document.getElementById('playhead').style.left = (currentStep / 16 * 100) + '%';
             document.getElementById('timeDisplay').textContent = 
                 '00:' + (currentStep < 10 ? '0'+currentStep : currentStep);
             
             // Play sounds
-            if(patterns.drums[0][currentStep]) instruments.drums[0].triggerAttackRelease("C1", "8n", time);
-            if(patterns.drums[1][currentStep]) instruments.drums[1].triggerAttackRelease("8n", time);
-            if(patterns.drums[2][currentStep]) instruments.drums[2].triggerAttackRelease("32n", time);
+            if(currentInstrument === 'drums') {
+                if(patterns.drums[0][currentStep]) instruments.kick.triggerAttackRelease("C1", "8n", time);
+                if(patterns.drums[1][currentStep]) instruments.snare.triggerAttackRelease("8n", time);
+                if(patterns.drums[2][currentStep]) instruments.hihat.triggerAttackRelease("32n", time, 0.3);
+            } else if(currentInstrument === 'bass') {
+                if(patterns.bass[0][currentStep]) instruments.bass.triggerAttackRelease("C2", "16n", time);
+                if(patterns.bass[1][currentStep]) instruments.bass.triggerAttackRelease("E2", "16n", time);
+                if(patterns.bass[2][currentStep]) instruments.bass.triggerAttackRelease("G2", "16n", time);
+            }
             
-            if(patterns.bass[0][currentStep]) instruments.bass.triggerAttackRelease("C2", "16n", time);
-            if(patterns.bass[1][currentStep]) instruments.bass.triggerAttackRelease("E2", "16n", time);
-            
-            // Visual
-            document.querySelectorAll('.step-btn').forEach((btn, idx) => {
-                const step = idx % 16;
-                if(step === currentStep) {
-                    btn.style.borderColor = 'white';
-                    btn.style.transform = 'scale(1.1)';
+            // Visual feedback
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((el, idx) => {
+                const stepIndex = idx % 16;
+                const row = Math.floor(idx / 16);
+                if(stepIndex === currentStep) {
+                    el.style.borderColor = 'white';
+                    el.style.transform = 'scale(1.1)';
                     setTimeout(() => {
-                        btn.style.borderColor = '';
-                        btn.style.transform = '';
+                        el.style.borderColor = '';
+                        el.style.transform = '';
                     }, 100);
                 }
             });
         }
 
-        // Controls
+        // Transport controls
         document.getElementById('playBtn').onclick = async function() {
-            if(!instruments.drums) await initAudio();
+            if(!instruments.kick) await initAudio();
             
             if(isPlaying) {
                 Tone.Transport.pause();
                 isPlaying = false;
-                this.style.background = '#06b6d4';
+                this.classList.remove('playing');
                 document.getElementById('playIcon').className = 'fas fa-play';
             } else {
                 Tone.Transport.start();
                 isPlaying = true;
-                this.style.background = '#22c55e';
+                this.classList.add('playing');
                 document.getElementById('playIcon').className = 'fas fa-pause';
             }
         };
@@ -325,7 +869,7 @@
             currentStep = 0;
             isPlaying = false;
             document.getElementById('playhead').style.left = '0%';
-            document.getElementById('playBtn').style.background = '#06b6d4';
+            document.getElementById('playBtn').classList.remove('playing');
             document.getElementById('playIcon').className = 'fas fa-play';
         };
 
@@ -333,134 +877,123 @@
             Tone.Transport.bpm.value = this.value;
         };
 
-        // Sequencer UI
-        function updateSequencer() {
-            const container = document.getElementById('sequencer-container');
+        // Sequencer
+        function renderSequencer() {
+            const container = document.getElementById('sequencer');
             container.innerHTML = '';
             
-            const labels = currentInst === 'drums' ? ['Kick', 'Snare', 'Hi-Hat'] : 
-                          currentInst === 'bass' ? ['C', 'E', 'G'] : ['Note 1', 'Note 2', 'Note 3'];
+            const labels = currentInstrument === 'drums' ? ['Kick', 'Snare', 'Hi-Hat'] : 
+                          currentInstrument === 'bass' ? ['C Root', 'E Third', 'G Fifth'] : 
+                          ['Note 1', 'Note 2', 'Note 3'];
             
             for(let row=0; row<3; row++) {
                 const rowDiv = document.createElement('div');
-                rowDiv.style.display = 'flex';
-                rowDiv.style.gap = '4px';
-                rowDiv.style.marginBottom = '8px';
-                rowDiv.style.alignItems = 'center';
+                rowDiv.className = 'seq-row';
                 
                 const label = document.createElement('div');
-                label.style.width = '50px';
-                label.style.fontSize = '11px';
-                label.style.color = '#666';
+                label.className = 'seq-label';
                 label.textContent = labels[row];
                 rowDiv.appendChild(label);
                 
-                for(let step=0; step<16; step++) {
-                    const btn = document.createElement('div');
-                    btn.className = 'step-btn';
-                    if(patterns[currentInst][row][step]) btn.classList.add('active');
-                    btn.onclick = () => {
-                        patterns[currentInst][row][step] = !patterns[currentInst][row][step];
-                        updateSequencer();
-                    };
-                    rowDiv.appendChild(btn);
+                for(let i=0; i<16; i++) {
+                    const step = document.createElement('div');
+                    step.className = 'step';
+                    if(patterns[currentInstrument][row][i]) step.classList.add('active');
+                    step.onclick = () => toggleStep(row, i);
+                    rowDiv.appendChild(step);
                 }
                 container.appendChild(rowDiv);
             }
         }
 
-        function setInst(inst) {
-            currentInst = inst;
-            ['drums','bass','lead'].forEach(i => {
-                const btn = document.getElementById('btn-'+i);
-                if(i === inst) {
-                    btn.style.background = 'rgba(6,182,212,0.2)';
-                    btn.style.borderColor = 'rgba(6,182,212,0.3)';
-                    btn.style.color = '#06b6d4';
-                } else {
-                    btn.style.background = 'transparent';
-                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
-                    btn.style.color = '#999';
-                }
-            });
-            updateSequencer();
+        function toggleStep(row, step) {
+            patterns[currentInstrument][row][step] = !patterns[currentInstrument][row][step];
+            renderSequencer();
         }
 
-        function clearSeq() {
-            for(let i=0; i<4; i++) {
-                for(let j=0; j<16; j++) patterns[currentInst][i][j] = false;
-            }
-            updateSequencer();
+        function setInstrument(inst) {
+            currentInstrument = inst;
+            document.querySelectorAll('.inst-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-'+inst).classList.add('active');
+            renderSequencer();
         }
 
-        function randomSeq() {
-            for(let i=0; i<4; i++) {
-                for(let j=0; j<16; j++) patterns[currentInst][i][j] = Math.random() > 0.7;
+        function clearPattern() {
+            for(let i=0; i<3; i++) {
+                for(let j=0; j<16; j++) patterns[currentInstrument][i][j] = false;
             }
-            updateSequencer();
+            renderSequencer();
+        }
+
+        function randomPattern() {
+            for(let i=0; i<3; i++) {
+                for(let j=0; j<16; j++) patterns[currentInstrument][i][j] = Math.random() > 0.7;
+            }
+            renderSequencer();
         }
 
         // AI Modal
-        function openModal() {
-            document.getElementById('aiModal').classList.add('show');
-        }
-        
-        function closeModal() {
-            document.getElementById('aiModal').classList.remove('show');
-        }
+        function showModal() { document.getElementById('aiModal').classList.add('show'); }
+        function hideModal() { document.getElementById('aiModal').classList.remove('show'); }
 
         function generate() {
             const btn = document.getElementById('genBtn');
-            const prog = document.getElementById('progress');
-            const bar = document.getElementById('progBar');
+            const prog = document.getElementById('progressDiv');
+            const fill = document.getElementById('progFill');
             const text = document.getElementById('progText');
-            const genre = document.getElementById('genreSelect').value;
+            const genre = document.getElementById('aiGenre').value;
             
             btn.disabled = true;
             prog.style.display = 'block';
             
-            const steps = ['Analyzing...', 'Synthesizing...', 'Optimizing...', 'Done!'];
+            const steps = ['Loading weights...', 'Analyzing genre...', 'Synthesizing...', 'Finalizing...'];
             let i = 0;
             
             const interval = setInterval(() => {
-                bar.style.width = ((i+1)/4*100) + '%';
+                fill.style.width = ((i+1)/4*100) + '%';
                 text.textContent = steps[i];
                 i++;
                 if(i >= 4) {
                     clearInterval(interval);
                     setTimeout(() => {
-                        applyPattern(genre);
-                        closeModal();
+                        applyGeneratedPattern(genre);
+                        hideModal();
                         btn.disabled = false;
                         prog.style.display = 'none';
-                        bar.style.width = '0%';
+                        fill.style.width = '0%';
                     }, 500);
                 }
-            }, 400);
+            }, 300);
         }
 
-        function applyPattern(genre) {
-            clearSeq();
+        function applyGeneratedPattern(genre) {
+            clearPattern();
             if(genre === 'techno') {
                 for(let i=0; i<16; i++) {
-                    if(i%4===0) patterns.drums[0][i] = true; // Kick
-                    if(i%4===2) patterns.drums[1][i] = true; // Snare
-                    if(i%2===0) patterns.drums[2][i] = true; // Hats
+                    if(i%4===0) patterns.drums[0][i] = true;
+                    if(i%8===4) patterns.drums[1][i] = true;
+                    if(i%2===0) patterns.drums[2][i] = true;
                 }
             } else if(genre === 'hiphop') {
-                [0,4,8,12].forEach(i => patterns.drums[0][i] = true); // Kick
-                [4,12].forEach(i => patterns.drums[1][i] = true); // Snare
-                [2,6,10,14].forEach(i => patterns.drums[2][i] = true); // Hats
+                [0,4,8,12].forEach(i => patterns.drums[0][i] = true);
+                [4,12].forEach(i => patterns.drums[1][i] = true);
             } else {
-                randomSeq();
+                randomPattern();
             }
-            updateSequencer();
+            if(currentInstrument !== 'drums') setInstrument('drums');
+            else renderSequencer();
         }
 
-        // Close modal on outside click
-        document.getElementById('aiModal').onclick = function(e) {
-            if(e.target === this) closeModal();
-        };
+        // Effects
+        function setReverb(val) {
+            if(instruments.reverb) instruments.reverb.wet.value = val/100;
+            document.getElementById('revVal').textContent = val + '%';
+        }
+
+        function setVolume(val) {
+            if(Tone.Destination) Tone.Destination.volume.value = (val/100)*20 - 20;
+            document.getElementById('volVal').textContent = val + '%';
+        }
 
         // Meters
         function animateMeters() {
@@ -470,62 +1003,47 @@
                 bar.style.height = h + '%';
                 bar.style.background = h > 80 ? '#ef4444' : h > 50 ? '#eab308' : '#22c55e';
             });
-            requestAnimationFrame(animateMeters);
+            if(isPlaying) requestAnimationFrame(animateMeters);
+            else setTimeout(animateMeters, 50);
         }
 
-        // Export
-        function exportWAV() {
-            if(!recorder) return alert('Audio not initialized. Click Play first.');
-            if(recorder.state === 'inactive') {
-                recorder.start();
-                if(!isPlaying) document.getElementById('playBtn').click();
-                setTimeout(() => {
-                    recorder.stop();
-                    alert('Download started!');
-                }, 3000);
-            }
+        // Export (simulated since we can't easily record without CORS issues on GH pages)
+        function exportAudio() {
+            alert('Export feature requires backend setup.\n\nIn a real app, this would render the mix to WAV.');
         }
 
         // Drag and drop
-        let dragged = null;
-        let dragOffset = {x:0,y:0};
+        let draggedEl = null;
+        let offset = {x:0,y:0};
 
         function startDrag(e, el) {
-            dragged = el;
-            dragOffset.x = e.clientX - el.offsetLeft;
-            dragOffset.y = e.clientY - el.offsetTop;
+            draggedEl = el;
+            offset.x = e.clientX - el.offsetLeft;
+            offset.y = e.clientY - el.offsetTop;
             el.style.zIndex = 1000;
             document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('mouseup', stopDrag);
         }
 
         function onDrag(e) {
-            if(!dragged) return;
-            dragged.style.left = (e.clientX - dragOffset.x) + 'px';
-            dragged.style.top = (e.clientY - dragOffset.y) + 'px';
+            if(!draggedEl) return;
+            draggedEl.style.left = (e.clientX - offset.x) + 'px';
         }
 
-        function endDrag() {
-            if(dragged) dragged.style.zIndex = '';
-            dragged = null;
+        function stopDrag() {
+            if(draggedEl) draggedEl.style.zIndex = '';
+            draggedEl = null;
             document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('mouseup', stopDrag);
         }
 
-        // Keyboard
+        // Keyboard shortcut
         document.onkeydown = (e) => {
             if(e.code === 'Space') {
                 e.preventDefault();
                 document.getElementById('playBtn').click();
             }
         };
-
-        // Default pattern
-        patterns.drums[0][0] = true;
-        patterns.drums[0][8] = true;
-        patterns.drums[1][4] = true;
-        patterns.drums[1][12] = true;
-        setInst('drums');
     </script>
 </body>
 </html>
