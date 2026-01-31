@@ -1,9 +1,0 @@
-mkdir ai-daw-pro
-cd ai-daw-pro
-git init
-
-git add index.html
-git commit -m "Initial DAW release"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/ai-daw-pro.git
-git push -u origin main
