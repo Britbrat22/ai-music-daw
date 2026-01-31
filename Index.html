@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI DAW Pro - GitHub Pages Edition</title>
-    <!-- Removed unused WaveSurfer.js -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>AI DAW Pro</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         
         :root {
             --bg-dark: #0a0a0f;
@@ -22,17 +22,37 @@
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg-dark);
             color: var(--text);
             overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            padding-top: 60px; /* FIX #1: Account for fixed header */
+            padding-top: 60px;
         }
 
-        /* CRITICAL FIX: Start Overlay for GitHub Pages */
+        /* Mobile Debug Console */
+        #debugConsole {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            right: 10px;
+            max-height: 200px;
+            background: rgba(0,0,0,0.9);
+            border: 2px solid #ef4444;
+            color: #10b981;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            overflow-y: auto;
+            z-index: 99999;
+            display: none;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
         #startOverlay {
             position: fixed;
             top: 0;
@@ -46,35 +66,41 @@
             justify-content: center;
             align-items: center;
             gap: 2rem;
+            touch-action: manipulation;
         }
 
         #startOverlay h1 {
             background: linear-gradient(135deg, #818cf8, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-size: 3rem;
+            font-size: 2rem;
+            text-align: center;
+            padding: 0 20px;
         }
 
         #startOverlay button {
-            padding: 1rem 3rem;
-            font-size: 1.5rem;
+            padding: 1.5rem 3rem;
+            font-size: 1.2rem;
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-            transition: transform 0.2s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-width: 200px;
         }
 
-        #startOverlay button:hover {
-            transform: scale(1.05);
+        #startOverlay button:active {
+            transform: scale(0.95);
+            opacity: 0.8;
         }
 
         .header {
             background: var(--bg-panel);
             border-bottom: 1px solid var(--border);
-            padding: 0.5rem 1rem;
+            padding: 0.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -85,27 +111,21 @@
             z-index: 100;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .logo { font-size: 1.2rem; font-weight: bold; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
         .transport {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
             background: rgba(0,0,0,0.3);
-            padding: 0.25rem 1rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 30px;
             border: 1px solid var(--border);
         }
 
         .transport-btn {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: none;
             cursor: pointer;
@@ -113,22 +133,20 @@
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
-            transition: all 0.2s;
             background: var(--bg-track);
             color: var(--text);
+            touch-action: manipulation;
         }
 
-        .transport-btn:hover { transform: scale(1.1); }
-        .transport-btn.record { color: var(--record); border: 2px solid var(--record); }
-        .transport-btn.record.active { background: var(--record); color: white; }
+        .transport-btn:active { transform: scale(0.9); }
         .transport-btn.play { color: var(--play); border: 2px solid var(--play); }
         .transport-btn.play.active { background: var(--play); color: white; }
 
         .time-display {
             font-family: monospace;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: var(--accent);
-            min-width: 100px;
+            min-width: 60px;
             text-align: center;
         }
 
@@ -136,10 +154,16 @@
             flex: 1;
             display: flex;
             overflow: hidden;
+            flex-direction: column; /* Stack on mobile */
+        }
+
+        @media (min-width: 768px) {
+            .main-container { flex-direction: row; }
         }
 
         .track-panel {
-            width: 250px;
+            width: 100%;
+            height: 30%;
             background: var(--bg-panel);
             border-right: 1px solid var(--border);
             display: flex;
@@ -147,22 +171,27 @@
             overflow-y: auto;
         }
 
+        @media (min-width: 768px) {
+            .track-panel { width: 250px; height: auto; }
+        }
+
         .panel-header {
-            padding: 1rem;
+            padding: 0.75rem;
             background: rgba(0,0,0,0.2);
             border-bottom: 1px solid var(--border);
             font-weight: bold;
             color: var(--accent);
+            font-size: 0.9rem;
         }
 
         .track-header {
-            height: 100px;
+            height: 80px;
             background: var(--bg-track);
             border-bottom: 1px solid var(--border);
-            padding: 0.75rem;
+            padding: 0.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.25rem;
         }
 
         .track-header.active { 
@@ -176,7 +205,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .track-controls {
@@ -186,8 +215,8 @@
         }
 
         .track-btn {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 4px;
             border: 1px solid var(--border);
             background: var(--bg-dark);
@@ -195,11 +224,11 @@
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: bold;
+            touch-action: manipulation;
         }
 
         .track-btn.mute.active { background: #ef4444; color: white; border-color: #ef4444; }
         .track-btn.solo.active { background: #f59e0b; color: white; border-color: #f59e0b; }
-        .track-btn.arm.active { background: var(--record); color: white; border-color: var(--record); }
 
         .fader-container {
             display: flex;
@@ -210,7 +239,7 @@
 
         .fader {
             flex: 1;
-            height: 6px;
+            height: 30px; /* Larger for touch */
             -webkit-appearance: none;
             background: var(--bg-dark);
             border-radius: 3px;
@@ -219,8 +248,8 @@
 
         .fader::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
             background: var(--accent);
             border-radius: 50%;
             cursor: pointer;
@@ -232,6 +261,11 @@
             flex-direction: column;
             overflow: hidden;
             background: var(--bg-dark);
+            height: 70%;
+        }
+
+        @media (min-width: 768px) {
+            .timeline-container { height: auto; }
         }
 
         .timeline-tracks {
@@ -241,31 +275,30 @@
         }
 
         .timeline-track {
-            height: 100px;
+            height: 80px;
             border-bottom: 1px solid var(--border);
             background: rgba(26, 26, 46, 0.5);
             position: relative;
             overflow: hidden;
         }
 
-        .timeline-track:nth-child(even) { background: rgba(26, 26, 46, 0.3); }
-
         .clip {
             position: absolute;
-            height: 80px;
+            height: 60px;
             top: 10px;
             background: linear-gradient(135deg, var(--accent), #8b5cf6);
             border-radius: 4px;
-            cursor: move;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             border: 2px solid transparent;
-            padding: 0 10px;
+            padding: 0 5px;
+            min-width: 40px;
         }
 
         .clip.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent); }
@@ -288,81 +321,67 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
-            flex-wrap: wrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tool-btn {
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1rem;
             background: var(--bg-track);
             border: 1px solid var(--border);
             color: var(--text);
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
             font-size: 0.9rem;
+            white-space: nowrap;
+            touch-action: manipulation;
         }
 
-        .tool-btn:hover { background: var(--accent); border-color: var(--accent); }
+        .tool-btn:active { background: var(--accent); }
 
         input[type="file"] { display: none; }
 
         .status-msg {
             position: fixed;
-            top: 80px;
-            right: 20px;
-            padding: 1rem;
+            top: 70px;
+            right: 10px;
+            padding: 0.75rem;
             background: #10b981;
             color: white;
             border-radius: 8px;
             z-index: 9999;
             display: none;
-        }
-
-        .error-log {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            max-width: 400px;
-            background: #ef4444;
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            z-index: 9999;
-            display: none;
-            font-family: monospace;
-            font-size: 0.8rem;
-            max-height: 200px;
-            overflow-y: auto;
+            font-size: 0.9rem;
+            max-width: 80%;
         }
 
         /* Scrollbars */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     </style>
-<base target="_blank">
 </head>
 <body>
 
-<!-- CRITICAL FIX: Click to start audio (GitHub Pages requirement) -->
+<!-- Mobile Debug Console -->
+<div id="debugConsole"></div>
+
 <div id="startOverlay">
     <h1>🎹 AI DAW Pro</h1>
-    <p style="color: var(--text-muted); max-width: 400px; text-align: center;">
-        Click below to initialize the audio engine.<br>
-        (Required by browsers for security)
+    <p style="color: var(--text-muted); text-align: center; padding: 0 20px; line-height: 1.5;">
+        Tap below to start<br>
+        <small>(iOS requires manual audio start)</small>
     </p>
-    <button onclick="initDAW()">▶ Start Studio</button>
+    <button id="startBtn">▶ Start Studio</button>
 </div>
 
 <div class="status-msg" id="statusMsg"></div>
-<div class="error-log" id="errorLog"></div>
 
 <div class="toolbar">
     <button class="tool-btn" onclick="addAudioTrack()">🎵 Add Track</button>
-    <button class="tool-btn" onclick="document.getElementById('fileInput').click()">📁 Import Audio</button>
-    <button class="tool-btn" onclick="generateAI()">🤖 AI Generate</button>
-    <button class="tool-btn" onclick="exportWAV()">💾 Export</button>
+    <button class="tool-btn" onclick="document.getElementById('fileInput').click()">📁 Import</button>
+    <button class="tool-btn" onclick="generateAI()">🤖 AI Gen</button>
+    <button class="tool-btn" onclick="showDebug()">🐛 Debug</button>
     <input type="file" id="fileInput" accept="audio/*" onchange="importAudio(event)">
 </div>
 
@@ -381,7 +400,7 @@
 </div>
 
 <div class="header">
-    <div class="logo">🎹 AI DAW Pro</div>
+    <div class="logo">🎹 AI DAW</div>
     
     <div class="transport">
         <button class="transport-btn" onclick="transportStop()">⏹</button>
@@ -389,12 +408,37 @@
         <div class="time-display" id="timeDisplay">00:00</div>
     </div>
     
-    <div style="color: var(--text-muted); font-size: 0.9rem;">
-        <span id="trackCount">0 tracks</span>
+    <div style="color: var(--text-muted); font-size: 0.8rem;">
+        <span id="trackCount">0</span>
     </div>
 </div>
 
 <script>
+// Debug logging for mobile
+const debugConsole = document.getElementById('debugConsole');
+let debugLogs = [];
+
+function log(msg, type = 'info') {
+    const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    debugLogs.push(line);
+    if (debugLogs.length > 50) debugLogs.shift();
+    
+    if (debugConsole.style.display === 'block') {
+        debugConsole.textContent = debugLogs.join('\n');
+    }
+    console.log(msg);
+}
+
+function showError(msg) {
+    log('ERROR: ' + msg, 'error');
+    showStatus('Error: ' + msg);
+}
+
+function showDebug() {
+    debugConsole.style.display = debugConsole.style.display === 'block' ? 'none' : 'block';
+    debugConsole.textContent = debugLogs.join('\n');
+}
+
 // Global State
 let tracks = [];
 let currentTrack = 0;
@@ -405,23 +449,6 @@ let audioCtx;
 let playheadInterval;
 let isInitialized = false;
 
-// Error handling wrapper
-function safeExecute(fn, name) {
-    try {
-        return fn();
-    } catch (err) {
-        showError(`${name}: ${err.message}`);
-        console.error(err);
-    }
-}
-
-function showError(msg) {
-    const log = document.getElementById('errorLog');
-    log.style.display = 'block';
-    log.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${msg}</div>`;
-    setTimeout(() => log.style.display = 'none', 5000);
-}
-
 function showStatus(msg) {
     const status = document.getElementById('statusMsg');
     status.textContent = msg;
@@ -429,21 +456,30 @@ function showStatus(msg) {
     setTimeout(() => status.style.display = 'none', 3000);
 }
 
-// CRITICAL FIX: Initialize on user gesture
+// iOS Audio Context initialization
 async function initDAW() {
+    log('Initializing DAW...');
+    
     try {
-        // Create AudioContext after user click (GitHub Pages requirement)
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Resume if suspended
-        if (audioCtx.state === 'suspended') {
-            await audioCtx.resume();
+        // iOS specific AudioContext creation
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+            throw new Error('Web Audio API not supported');
         }
         
-        // Hide overlay - FIX #4: Disable pointer events during fade
+        audioCtx = new AudioContext();
+        log('AudioContext created, state: ' + audioCtx.state);
+        
+        // iOS requires resume after creation
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+            log('AudioContext resumed, new state: ' + audioCtx.state);
+        }
+        
+        // Hide overlay
         const overlay = document.getElementById('startOverlay');
-        overlay.style.pointerEvents = 'none';
         overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
         setTimeout(() => {
             overlay.style.display = 'none';
         }, 500);
@@ -453,45 +489,30 @@ async function initDAW() {
         // Add first track
         addAudioTrack();
         
-        showStatus('Audio Engine Started');
+        showStatus('Audio Started');
+        log('DAW Initialized successfully');
         
-        // Handle autoplay policy changes
-        document.addEventListener('click', async () => {
+        // iOS touch handler for audio context maintenance
+        document.addEventListener('touchstart', async () => {
             if (audioCtx && audioCtx.state === 'suspended') {
                 await audioCtx.resume();
+                log('Resumed via touch');
             }
-        }, { capture: true });
-        
-        // FIX #5: Synchronize scrolling between track panel and timeline
-        setupScrollSync();
+        }, { passive: true });
         
     } catch (err) {
-        showError('Failed to initialize audio: ' + err.message);
+        log('Init Error: ' + err.message);
+        showError('Failed to start: ' + err.message);
     }
 }
 
-// FIX #5: Scroll synchronization
-function setupScrollSync() {
-    const trackPanel = document.querySelector('.track-panel');
-    const timelineTracks = document.querySelector('.timeline-tracks');
-    let isSyncing = false;
-    
-    trackPanel.addEventListener('scroll', (e) => {
-        if (!isSyncing) {
-            isSyncing = true;
-            timelineTracks.scrollTop = e.target.scrollTop;
-            isSyncing = false;
-        }
-    });
-    
-    timelineTracks.addEventListener('scroll', (e) => {
-        if (!isSyncing) {
-            isSyncing = true;
-            trackPanel.scrollTop = e.target.scrollTop;
-            isSyncing = false;
-        }
-    });
-}
+// Bind start button with both click and touch for iOS
+const startBtn = document.getElementById('startBtn');
+startBtn.addEventListener('click', initDAW);
+startBtn.addEventListener('touchend', (e) => {
+    e.preventDefault(); // Prevent double firing
+    initDAW();
+});
 
 class Track {
     constructor(type = 'audio') {
@@ -504,12 +525,17 @@ class Track {
         this.mute = false;
         this.solo = false;
         
-        // Create audio nodes only if initialized
         if (isInitialized && audioCtx) {
-            this.gainNode = audioCtx.createGain();
-            this.pannerNode = audioCtx.createStereoPanner();
-            this.gainNode.connect(this.pannerNode);
-            this.pannerNode.connect(audioCtx.destination);
+            try {
+                this.gainNode = audioCtx.createGain();
+                this.pannerNode = audioCtx.createStereoPanner();
+                this.gainNode.connect(this.pannerNode);
+                this.pannerNode.connect(audioCtx.destination);
+                this.gainNode.gain.value = this.volume;
+                log(`Track ${this.id} audio nodes created`);
+            } catch (e) {
+                log('Track node error: ' + e.message);
+            }
         }
         
         this.createDOM();
@@ -519,19 +545,18 @@ class Track {
     createDOM() {
         const header = document.createElement('div');
         header.className = 'track-header' + (this.id === currentTrack ? ' active' : '');
-        // FIX #2: Pass event explicitly to onclick handlers
         header.innerHTML = `
             <div class="track-name">
                 🎵 ${this.name}
                 <span style="font-size: 0.7rem; opacity: 0.7;">${this.type}</span>
             </div>
             <div class="track-controls">
-                <button class="track-btn mute" onclick="toggleMute(${this.id}, event)">M</button>
-                <button class="track-btn solo" onclick="toggleSolo(${this.id}, event)">S</button>
+                <button class="track-btn mute" ontouchstart="toggleMute(${this.id}, event)" onclick="toggleMute(${this.id}, event)">M</button>
+                <button class="track-btn solo" ontouchstart="toggleSolo(${this.id}, event)" onclick="toggleSolo(${this.id}, event)">S</button>
             </div>
-            <div class="fader-container" onclick="event.stopPropagation()">
+            <div class="fader-container" ontouchend="event.stopPropagation()" onclick="event.stopPropagation()">
                 <input type="range" class="fader" min="0" max="1" step="0.01" value="0.8" 
-                    oninput="updateVolume(${this.id}, this.value)" style="flex: 1;">
+                    oninput="updateVolume(${this.id}, this.value)" ontouchend="event.stopPropagation()">
             </div>
         `;
         header.onclick = () => selectTrack(this.id);
@@ -545,11 +570,16 @@ class Track {
 }
 
 function updateTrackCount() {
-    document.getElementById('trackCount').textContent = `${tracks.length} tracks`;
+    document.getElementById('trackCount').textContent = tracks.length;
 }
 
 function addAudioTrack() {
-    safeExecute(() => tracks.push(new Track('audio')), 'Add Track');
+    try {
+        tracks.push(new Track('audio'));
+        log('Added track ' + tracks.length);
+    } catch (err) {
+        showError('Add track failed: ' + err.message);
+    }
 }
 
 function selectTrack(id) {
@@ -557,41 +587,51 @@ function selectTrack(id) {
     document.querySelectorAll('.track-header').forEach((h, i) => {
         h.classList.toggle('active', i === id);
     });
+    log('Selected track ' + (id + 1));
 }
 
-// FIX #2: Accept event parameter explicitly
 function toggleMute(id, e) {
-    safeExecute(() => {
+    try {
         tracks[id].mute = !tracks[id].mute;
         if (tracks[id].gainNode) {
             tracks[id].gainNode.gain.value = tracks[id].mute ? 0 : tracks[id].volume;
         }
         e.target.classList.toggle('active', tracks[id].mute);
-    }, 'Mute');
+        log(`Track ${id+1} mute: ${tracks[id].mute}`);
+    } catch (err) {
+        showError('Mute error: ' + err.message);
+    }
 }
 
-// FIX #2: Accept event parameter explicitly
 function toggleSolo(id, e) {
-    safeExecute(() => {
+    try {
         tracks[id].solo = !tracks[id].solo;
         e.target.classList.toggle('active', tracks[id].solo);
-    }, 'Solo');
+        log(`Track ${id+1} solo: ${tracks[id].solo}`);
+    } catch (err) {
+        showError('Solo error: ' + err.message);
+    }
 }
 
 function updateVolume(id, val) {
-    safeExecute(() => {
-        tracks[id].volume = parseFloat(val);
+    try {
+        const vol = parseFloat(val);
+        tracks[id].volume = vol;
         if (!tracks[id].mute && tracks[id].gainNode) {
-            tracks[id].gainNode.gain.value = tracks[id].volume;
+            tracks[id].gainNode.gain.value = vol;
         }
-    }, 'Volume');
+    } catch (err) {
+        showError('Volume error: ' + err.message);
+    }
 }
 
 async function togglePlay() {
     if (!isInitialized) {
-        alert('Please click "Start Studio" first!');
+        showStatus('Tap Start Studio first!');
         return;
     }
+    
+    log('Toggle play, current: ' + isPlaying);
     
     if (isPlaying) {
         pauseTransport();
@@ -601,51 +641,68 @@ async function togglePlay() {
 }
 
 async function startTransport() {
-    if (!audioCtx) return;
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    if (!audioCtx) {
+        showError('No audio context');
+        return;
+    }
     
-    isPlaying = true;
-    document.getElementById('playBtn').classList.add('active');
-    document.getElementById('playBtn').textContent = '⏸';
-    
-    const startTime = audioCtx.currentTime;
-    const startPos = currentTime;
-    
-    // FIX #3: Schedule clips - handle both overlapping and future clips
-    tracks.forEach(track => {
-        track.clips.forEach(clip => {
-            if (clip.buffer && track.gainNode) {
-                const clipEnd = clip.startTime + clip.duration;
+    try {
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+            log('Resumed AudioContext for playback');
+        }
+        
+        isPlaying = true;
+        document.getElementById('playBtn').classList.add('active');
+        document.getElementById('playBtn').textContent = '⏸';
+        
+        const startTime = audioCtx.currentTime;
+        const startPos = currentTime;
+        
+        log('Starting playback at ' + startPos);
+        
+        // Schedule clips
+        tracks.forEach((track, idx) => {
+            track.clips.forEach((clip, cidx) => {
+                if (!clip.buffer || !track.gainNode) return;
                 
-                // Case 1: Clip is currently playing (overlaps with currentTime)
-                if (clip.startTime <= currentTime && clipEnd > currentTime) {
-                    const source = audioCtx.createBufferSource();
-                    source.buffer = clip.buffer;
-                    source.connect(track.gainNode);
+                try {
+                    const clipEnd = clip.startTime + clip.duration;
                     
-                    const offset = currentTime - clip.startTime; // Start from middle
-                    const when = startTime; // Play immediately
-                    source.start(when, offset);
-                    clip.source = source;
+                    if (clip.startTime <= currentTime && clipEnd > currentTime) {
+                        // Resume mid-clip
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = clip.buffer;
+                        source.connect(track.gainNode);
+                        const offset = currentTime - clip.startTime;
+                        source.start(startTime, offset);
+                        clip.source = source;
+                        log(`Track ${idx} clip ${cidx}: resume from ${offset.toFixed(2)}`);
+                    } else if (clip.startTime > currentTime) {
+                        // Future clip
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = clip.buffer;
+                        source.connect(track.gainNode);
+                        const when = startTime + (clip.startTime - currentTime);
+                        source.start(when);
+                        clip.source = source;
+                    }
+                } catch (e) {
+                    log(`Clip error: ${e.message}`);
                 }
-                // Case 2: Future clips (start later)
-                else if (clip.startTime > currentTime) {
-                    const source = audioCtx.createBufferSource();
-                    source.buffer = clip.buffer;
-                    source.connect(track.gainNode);
-                    const when = startTime + (clip.startTime - currentTime);
-                    source.start(when);
-                    clip.source = source;
-                }
-            }
+            });
         });
-    });
-    
-    playheadInterval = setInterval(() => {
-        const elapsed = audioCtx.currentTime - startTime;
-        currentTime = startPos + elapsed;
-        updatePlayhead();
-    }, 50);
+        
+        playheadInterval = setInterval(() => {
+            const elapsed = audioCtx.currentTime - startTime;
+            currentTime = startPos + elapsed;
+            updatePlayhead();
+        }, 50);
+        
+    } catch (err) {
+        showError('Playback error: ' + err.message);
+        isPlaying = false;
+    }
 }
 
 function pauseTransport() {
@@ -653,6 +710,7 @@ function pauseTransport() {
     document.getElementById('playBtn').classList.remove('active');
     document.getElementById('playBtn').textContent = '▶';
     clearInterval(playheadInterval);
+    log('Paused at ' + currentTime.toFixed(2));
     
     tracks.forEach(track => {
         track.clips.forEach(clip => {
@@ -668,6 +726,7 @@ function transportStop() {
     pauseTransport();
     currentTime = 0;
     updatePlayhead();
+    log('Stopped');
 }
 
 function updatePlayhead() {
@@ -679,21 +738,24 @@ function updatePlayhead() {
     document.getElementById('timeDisplay').textContent = `${mins}:${secs}`;
 }
 
-// FIX #7: Add validation for audioCtx
 function importAudio(event) {
     if (!audioCtx) {
-        showError('Audio engine not initialized');
+        showError('Start audio engine first');
         return;
     }
     
-    safeExecute(async () => {
+    try {
         const file = event.target.files[0];
         if (!file) return;
+        
+        log('Importing: ' + file.name);
+        showStatus('Importing...');
         
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const arrayBuffer = e.target.result;
+                log('Decoding audio...');
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                 
                 const clip = {
@@ -701,18 +763,21 @@ function importAudio(event) {
                     buffer: audioBuffer,
                     startTime: currentTime,
                     duration: audioBuffer.duration,
-                    name: file.name.substring(0, 15)
+                    name: file.name.substring(0, 10)
                 };
                 
                 tracks[currentTrack].clips.push(clip);
                 renderClip(clip, currentTrack);
-                showStatus(`Imported: ${file.name}`);
+                showStatus('Imported!');
+                log('Import success, duration: ' + audioBuffer.duration.toFixed(2));
             } catch (err) {
-                showError('Import failed: ' + err.message);
+                showError('Decode failed: ' + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
-    }, 'Import');
+    } catch (err) {
+        showError('Import error: ' + err.message);
+    }
 }
 
 function renderClip(clip, trackId) {
@@ -723,10 +788,10 @@ function renderClip(clip, trackId) {
     div.className = 'clip';
     div.id = `clip-${clip.id}`;
     div.style.left = (clip.startTime * pixelsPerSecond) + 'px';
-    div.style.width = (clip.duration * pixelsPerSecond) + 'px';
+    div.style.width = Math.max((clip.duration * pixelsPerSecond), 40) + 'px';
     div.textContent = clip.name;
     div.title = clip.name;
-    div.onclick = (e) => {
+    div.ontouchstart = div.onclick = (e) => {
         e.stopPropagation();
         selectClip(clip.id);
     };
@@ -739,26 +804,24 @@ function selectClip(id) {
     if (clip) clip.classList.add('selected');
 }
 
-// AI Generation
 function generateAI() {
-    safeExecute(() => {
-        if (!audioCtx) {
-            alert('Start the audio engine first!');
-            return;
-        }
-        
-        // Create a simple synthesized melody
+    if (!audioCtx) {
+        showError('Start audio first!');
+        return;
+    }
+    
+    try {
+        log('Generating AI melody...');
         const duration = 4;
         const sampleRate = audioCtx.sampleRate;
         const buffer = audioCtx.createBuffer(2, duration * sampleRate, sampleRate);
         
-        // Simple melody: C4, E4, G4, C5
         const freqs = [261.63, 329.63, 392.00, 523.25];
         
         for (let i = 0; i < 4; i++) {
             const freq = freqs[i];
             const start = i * (duration / 4) * sampleRate;
-            const end = start + (0.5 * sampleRate); // 0.5 second notes
+            const end = start + (0.5 * sampleRate);
             
             for (let channel = 0; channel < 2; channel++) {
                 const data = buffer.getChannelData(channel);
@@ -779,20 +842,31 @@ function generateAI() {
         
         tracks[currentTrack].clips.push(clip);
         renderClip(clip, currentTrack);
-        showStatus('AI Melody Generated!');
-    }, 'AI Generate');
-}
-
-function exportWAV() {
-    showStatus('Export feature - connect tracks to offline context');
+        showStatus('AI Generated!');
+        log('AI generation complete');
+    } catch (err) {
+        showError('AI Gen failed: ' + err.message);
+    }
 }
 
 // Handle visibility change
 document.addEventListener('visibilitychange', () => {
     if (document.hidden && isPlaying) {
         pauseTransport();
+        log('Auto-paused (background)');
     }
 });
+
+// iOS prevents default touch behaviors
+document.addEventListener('touchmove', function(e) {
+    if (e.target.closest('.timeline-tracks') || e.target.closest('.track-panel')) {
+        // Allow scrolling in these areas
+    } else {
+        // e.preventDefault(); // Uncomment if you want to prevent bounce
+    }
+}, { passive: true });
+
+log('Page loaded, waiting for start...');
 </script>
 
 </body>
