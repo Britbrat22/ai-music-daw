@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI DAW Pro - GitHub Pages Edition</title>
+    <!-- Use HTTPS CDN to avoid mixed content errors -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.0/wavesurfer.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-panel: #151520;
+            --bg-track: #1a1a2e;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #2d3748;
+            --record: #ef4444;
+            --play: #10b981;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CRITICAL FIX: Start Overlay for GitHub Pages */
+        #startOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.98);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        #startOverlay h1 {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3rem;
+        }
+
+        #startOverlay button {
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            transition: transform 0.2s;
+        }
+
+        #startOverlay button:hover {
+            transform: scale(1.05);
+        }
+
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .transport {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.3);
+            padding: 0.25rem 1rem;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .transport-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            background: var(--bg-track);
+            color: var(--text);
+        }
+
+        .transport-btn:hover { transform: scale(1.1); }
+        .transport-btn.record { color: var(--record); border: 2px solid var(--record); }
+        .transport-btn.record.active { background: var(--record); color: white; }
+        .transport-btn.play { color: var(--play); border: 2px solid var(--play); }
+        .transport-btn.play.active { background: var(--play); color: white; }
+
+        .time-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            color: var(--accent);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .track-panel {
+            width: 250px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .track-header {
+            height: 100px;
+            background: var(--bg-track);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .track-header.active { 
+            background: rgba(99, 102, 241, 0.2); 
+            border-left: 3px solid var(--accent); 
+        }
+        
+        .track-name {
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .track-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .track-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .track-btn.mute.active { background: #ef4444; color: white; border-color: #ef4444; }
+        .track-btn.solo.active { background: #f59e0b; color: white; border-color: #f59e0b; }
+        .track-btn.arm.active { background: var(--record); color: white; border-color: var(--record); }
+
+        .fader-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+
+        .fader {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .fader::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .timeline-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-dark);
+        }
+
+        .timeline-tracks {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        .timeline-track {
+            height: 100px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(26, 26, 46, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-track:nth-child(even) { background: rgba(26, 26, 46, 0.3); }
+
+        .clip {
+            position: absolute;
+            height: 80px;
+            top: 10px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 4px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            border: 2px solid transparent;
+            padding: 0 10px;
+        }
+
+        .clip.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent); }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: var(--record);
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 0 10px var(--record);
+        }
+
+        .toolbar {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-track);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .tool-btn:hover { background: var(--accent); border-color: var(--accent); }
+
+        input[type="file"] { display: none; }
+
+        .status-msg {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            z-index: 9999;
+            display: none;
+        }
+
+        .error-log {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            max-width: 400px;
+            background: #ef4444;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            z-index: 9999;
+            display: none;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+<!-- CRITICAL FIX: Click to start audio (GitHub Pages requirement) -->
+<div id="startOverlay">
+    <h1>🎹 AI DAW Pro</h1>
+    <p style="color: var(--text-muted); max-width: 400px; text-align: center;">
+        Click below to initialize the audio engine.<br>
+        (Required by browsers for security)
+    </p>
+    <button onclick="initDAW()">▶ Start Studio</button>
+</div>
+
+<div class="status-msg" id="statusMsg"></div>
+<div class="error-log" id="errorLog"></div>
+
+<div class="toolbar">
+    <button class="tool-btn" onclick="addAudioTrack()">🎵 Add Track</button>
+    <button class="tool-btn" onclick="document.getElementById('fileInput').click()">📁 Import Audio</button>
+    <button class="tool-btn" onclick="generateAI()">🤖 AI Generate</button>
+    <button class="tool-btn" onclick="exportWAV()">💾 Export</button>
+    <input type="file" id="fileInput" accept="audio/*" onchange="importAudio(event)">
+</div>
+
+<div class="main-container">
+    <div class="track-panel" id="trackPanel">
+        <div class="panel-header">Tracks</div>
+        <div id="trackHeaders"></div>
+    </div>
+
+    <div class="timeline-container">
+        <div class="timeline-tracks" id="timelineTracks">
+            <div class="playhead" id="playhead" style="left: 0px;"></div>
+            <div id="trackLanes"></div>
+        </div>
+    </div>
+</div>
+
+<div class="header" style="position: fixed; top: 0; width: 100%; z-index: 100;">
+    <div class="logo">🎹 AI DAW Pro</div>
+    
+    <div class="transport">
+        <button class="transport-btn" onclick="transportStop()">⏹</button>
+        <button class="transport-btn play" id="playBtn" onclick="togglePlay()">▶</button>
+        <div class="time-display" id="timeDisplay">00:00</div>
+    </div>
+    
+    <div style="color: var(--text-muted); font-size: 0.9rem;">
+        <span id="trackCount">0 tracks</span>
+    </div>
+</div>
+
+<script>
+// Global State
+let tracks = [];
+let currentTrack = 0;
+let isPlaying = false;
+let currentTime = 0;
+let pixelsPerSecond = 50;
+let audioCtx;
+let playheadInterval;
+let isInitialized = false;
+
+// Error handling wrapper
+function safeExecute(fn, name) {
+    try {
+        return fn();
+    } catch (err) {
+        showError(`${name}: ${err.message}`);
+        console.error(err);
+    }
+}
+
+function showError(msg) {
+    const log = document.getElementById('errorLog');
+    log.style.display = 'block';
+    log.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${msg}</div>`;
+    setTimeout(() => log.style.display = 'none', 5000);
+}
+
+function showStatus(msg) {
+    const status = document.getElementById('statusMsg');
+    status.textContent = msg;
+    status.style.display = 'block';
+    setTimeout(() => status.style.display = 'none', 3000);
+}
+
+// CRITICAL FIX: Initialize on user gesture
+async function initDAW() {
+    try {
+        // Create AudioContext after user click (GitHub Pages requirement)
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Resume if suspended
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+        }
+        
+        // Hide overlay
+        document.getElementById('startOverlay').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('startOverlay').style.display = 'none';
+        }, 500);
+        
+        isInitialized = true;
+        
+        // Add first track
+        addAudioTrack();
+        
+        showStatus('Audio Engine Started');
+        
+        // Handle autoplay policy changes
+        document.addEventListener('click', async () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+        }, { capture: true });
+        
+    } catch (err) {
+        showError('Failed to initialize audio: ' + err.message);
+    }
+}
+
+class Track {
+    constructor(type = 'audio') {
+        this.id = tracks.length;
+        this.type = type;
+        this.name = `Track ${this.id + 1}`;
+        this.clips = [];
+        this.volume = 0.8;
+        this.pan = 0;
+        this.mute = false;
+        this.solo = false;
+        
+        // Create audio nodes only if initialized
+        if (isInitialized && audioCtx) {
+            this.gainNode = audioCtx.createGain();
+            this.pannerNode = audioCtx.createStereoPanner();
+            this.gainNode.connect(this.pannerNode);
+            this.pannerNode.connect(audioCtx.destination);
+        }
+        
+        this.createDOM();
+        updateTrackCount();
+    }
+    
+    createDOM() {
+        const header = document.createElement('div');
+        header.className = 'track-header' + (this.id === currentTrack ? ' active' : '');
+        header.innerHTML = `
+            <div class="track-name">
+                🎵 ${this.name}
+                <span style="font-size: 0.7rem; opacity: 0.7;">${this.type}</span>
+            </div>
+            <div class="track-controls">
+                <button class="track-btn mute" onclick="toggleMute(${this.id})">M</button>
+                <button class="track-btn solo" onclick="toggleSolo(${this.id})">S</button>
+            </div>
+            <div class="fader-container">
+                <input type="range" class="fader" min="0" max="1" step="0.01" value="0.8" 
+                    oninput="updateVolume(${this.id}, this.value)" style="flex: 1;">
+            </div>
+        `;
+        header.onclick = () => selectTrack(this.id);
+        document.getElementById('trackHeaders').appendChild(header);
+        
+        const lane = document.createElement('div');
+        lane.className = 'timeline-track';
+        lane.id = `lane-${this.id}`;
+        document.getElementById('trackLanes').appendChild(lane);
+    }
+}
+
+function updateTrackCount() {
+    document.getElementById('trackCount').textContent = `${tracks.length} tracks`;
+}
+
+function addAudioTrack() {
+    safeExecute(() => tracks.push(new Track('audio')), 'Add Track');
+}
+
+function selectTrack(id) {
+    currentTrack = id;
+    document.querySelectorAll('.track-header').forEach((h, i) => {
+        h.classList.toggle('active', i === id);
+    });
+}
+
+function toggleMute(id) {
+    safeExecute(() => {
+        tracks[id].mute = !tracks[id].mute;
+        if (tracks[id].gainNode) {
+            tracks[id].gainNode.gain.value = tracks[id].mute ? 0 : tracks[id].volume;
+        }
+        event.target.classList.toggle('active', tracks[id].mute);
+    }, 'Mute');
+}
+
+function toggleSolo(id) {
+    safeExecute(() => {
+        tracks[id].solo = !tracks[id].solo;
+        event.target.classList.toggle('active', tracks[id].solo);
+    }, 'Solo');
+}
+
+function updateVolume(id, val) {
+    safeExecute(() => {
+        tracks[id].volume = parseFloat(val);
+        if (!tracks[id].mute && tracks[id].gainNode) {
+            tracks[id].gainNode.gain.value = tracks[id].volume;
+        }
+    }, 'Volume');
+}
+
+async function togglePlay() {
+    if (!isInitialized) {
+        alert('Please click "Start Studio" first!');
+        return;
+    }
+    
+    if (isPlaying) {
+        pauseTransport();
+    } else {
+        await startTransport();
+    }
+}
+
+async function startTransport() {
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    
+    isPlaying = true;
+    document.getElementById('playBtn').classList.add('active');
+    document.getElementById('playBtn').textContent = '⏸';
+    
+    const startTime = audioCtx.currentTime;
+    const startPos = currentTime;
+    
+    // Schedule clips
+    tracks.forEach(track => {
+        track.clips.forEach(clip => {
+            if (clip.buffer && clip.startTime >= startPos && track.gainNode) {
+                const source = audioCtx.createBufferSource();
+                source.buffer = clip.buffer;
+                source.connect(track.gainNode);
+                const when = startTime + (clip.startTime - startPos);
+                source.start(when);
+                clip.source = source;
+            }
+        });
+    });
+    
+    playheadInterval = setInterval(() => {
+        const elapsed = audioCtx.currentTime - startTime;
+        currentTime = startPos + elapsed;
+        updatePlayhead();
+    }, 50);
+}
+
+function pauseTransport() {
+    isPlaying = false;
+    document.getElementById('playBtn').classList.remove('active');
+    document.getElementById('playBtn').textContent = '▶';
+    clearInterval(playheadInterval);
+    
+    tracks.forEach(track => {
+        track.clips.forEach(clip => {
+            if (clip.source) {
+                try { clip.source.stop(); } catch(e) {}
+                clip.source = null;
+            }
+        });
+    });
+}
+
+function transportStop() {
+    pauseTransport();
+    currentTime = 0;
+    updatePlayhead();
+}
+
+function updatePlayhead() {
+    const pos = currentTime * pixelsPerSecond;
+    document.getElementById('playhead').style.left = pos + 'px';
+    
+    const mins = Math.floor(currentTime / 60).toString().padStart(2, '0');
+    const secs = Math.floor(currentTime % 60).toString().padStart(2, '0');
+    document.getElementById('timeDisplay').textContent = `${mins}:${secs}`;
+}
+
+function importAudio(event) {
+    safeExecute(async () => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const arrayBuffer = e.target.result;
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                
+                const clip = {
+                    id: Date.now(),
+                    buffer: audioBuffer,
+                    startTime: currentTime,
+                    duration: audioBuffer.duration,
+                    name: file.name.substring(0, 15)
+                };
+                
+                tracks[currentTrack].clips.push(clip);
+                renderClip(clip, currentTrack);
+                showStatus(`Imported: ${file.name}`);
+            } catch (err) {
+                showError('Import failed: ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }, 'Import');
+}
+
+function renderClip(clip, trackId) {
+    const lane = document.getElementById(`lane-${trackId}`);
+    if (!lane) return;
+    
+    const div = document.createElement('div');
+    div.className = 'clip';
+    div.id = `clip-${clip.id}`;
+    div.style.left = (clip.startTime * pixelsPerSecond) + 'px';
+    div.style.width = (clip.duration * pixelsPerSecond) + 'px';
+    div.textContent = clip.name;
+    div.title = clip.name;
+    div.onclick = (e) => {
+        e.stopPropagation();
+        selectClip(clip.id);
+    };
+    lane.appendChild(div);
+}
+
+function selectClip(id) {
+    document.querySelectorAll('.clip').forEach(c => c.classList.remove('selected'));
+    const clip = document.getElementById(`clip-${id}`);
+    if (clip) clip.classList.add('selected');
+}
+
+// AI Generation
+function generateAI() {
+    safeExecute(() => {
+        if (!audioCtx) {
+            alert('Start the audio engine first!');
+            return;
+        }
+        
+        // Create a simple synthesized melody
+        const duration = 4;
+        const sampleRate = audioCtx.sampleRate;
+        const buffer = audioCtx.createBuffer(2, duration * sampleRate, sampleRate);
+        
+        // Simple melody: C4, E4, G4, C5
+        const freqs = [261.63, 329.63, 392.00, 523.25];
+        
+        for (let i = 0; i < 4; i++) {
+            const freq = freqs[i];
+            const start = i * (duration / 4) * sampleRate;
+            const end = start + (0.5 * sampleRate); // 0.5 second notes
+            
+            for (let channel = 0; channel < 2; channel++) {
+                const data = buffer.getChannelData(channel);
+                for (let j = start; j < end && j < data.length; j++) {
+                    const t = (j - start) / sampleRate;
+                    data[j] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 4) * 0.3;
+                }
+            }
+        }
+        
+        const clip = {
+            id: Date.now(),
+            buffer: buffer,
+            startTime: currentTime,
+            duration: duration,
+            name: 'AI Melody'
+        };
+        
+        tracks[currentTrack].clips.push(clip);
+        renderClip(clip, currentTrack);
+        showStatus('AI Melody Generated!');
+    }, 'AI Generate');
+}
+
+function exportWAV() {
+    showStatus('Export feature - connect tracks to offline context');
+}
+
+// Handle visibility change
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isPlaying) {
+        pauseTransport();
+    }
+});
+</script>
+
+</body>
+</html>
